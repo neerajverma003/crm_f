@@ -1098,25 +1098,33 @@ const EmployeeLeads = () => {
   };
 
   const handleAddLead = async (data) => {
-    const payload = { ...data, employee: employeeId };
+    if (!employeeId) throw new Error("Employee ID missing, please login again");
+    // send both `employee` and `employeeId` to be robust
+    const payload = { ...data, employee: employeeId, employeeId };
     const res = await fetch("http://localhost:4000/employeelead", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Failed to create lead");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to create lead");
+    }
     await fetchLeads();
   };
 
   const handleUpdateLead = async (data) => {
     if (!editLead) return;
-    const payload = { ...data, employee: employeeId };
+    const payload = { ...data, employee: employeeId, employeeId };
     const res = await fetch(`http://localhost:4000/employeelead/${editLead._id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error("Failed to update lead");
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || "Failed to update lead");
+    }
     await fetchLeads();
   };
 
