@@ -2,11 +2,6 @@
 // import { X } from "lucide-react";
 
 // const ChequeExpense = () => {
-//   const [showModal, setShowModal] = useState(false);
-//   const [cheques, setCheques] = useState([]); // ✅ state for fetched cheques
-//   const [editingChequeId, setEditingChequeId] = useState(null);
-//   const [loading, setLoading] = useState(false);
-//   const [selectedTab, setSelectedTab] = useState("pending");
 
 //   const [formData, setFormData] = useState({
 //     issuedDate: "",
@@ -524,23 +519,32 @@
 
 
 import React, { useState, useEffect, useMemo } from "react";
-import { X, Edit2 } from "lucide-react";
+import { X, Edit2, Eye } from "lucide-react";
 
 const ChequeExpense = () => {
-  const [showModal, setShowModal] = useState(false);
-  const [cheques, setCheques] = useState([]); // ✅ state for fetched cheques
-  const [editingChequeId, setEditingChequeId] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [selectedTab, setSelectedTab] = useState("pending");
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [cheques, setCheques] = useState([]);
+  const [editingChequeId, setEditingChequeId] = useState(null);
+  const [viewCheque, setViewCheque] = useState(null);
+  const [statusModal, setStatusModal] = useState({
+    open: false,
+    type: null,
+    chequeId: null,
+    currentStatus: null,
+    reason: "",
+    clearDate: "",
+    shiftRemark: "",
+  });
 
   const [formData, setFormData] = useState({
     issuedDate: "",
     toWhom: "",
-    validity: "",
     amount: "",
     chequeNumber: "",
     reason: "",
@@ -660,6 +664,12 @@ const ChequeExpense = () => {
   const STATUSES = ["all", "clear", "shifted", "pending", "cancelled"];
   const FILTER_OPTIONS = STATUSES;
   const STATUS_KEYS = ["clear", "shifted", "pending", "cancelled"];
+  const statusBadgeStyles = {
+    pending: "bg-yellow-200 text-yellow-900",
+    clear: "bg-green-200 text-green-800",
+    cancelled: "bg-red-200 text-red-800",
+    shifted: "bg-blue-200 text-blue-800",
+  };
 
   const totalsByStatus = useMemo(() => {
     const map = {};
@@ -728,15 +738,13 @@ const ChequeExpense = () => {
     return finalFilteredCheques.reduce((acc, c) => acc + parseAmount(c.chequeAmount), 0);
   }, [finalFilteredCheques]);
 
-  const updateStatus = async (id, newStatus) => {
+  const updateStatus = async (id, payload = {}) => {
     try {
-
-      // Optimistic update (optional): update local state first
-      setCheques((prev) => prev.map((c) => (c._id === id ? { ...c, status: newStatus } : c)));
+      // Call API to update status and any additional data supplied
       const res = await fetch(`http://localhost:4000/cheque/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify(payload),
       });
       if (!res.ok) throw new Error("Failed to update status");
       // refresh list to ensure server-side updates are reflected
@@ -745,10 +753,67 @@ const ChequeExpense = () => {
     } catch (error) {
       console.error("Error updating status:", error);
       alert("Unable to update status, try again.");
-      // revert optimistic update (re-fetch)
+      // refresh list to show current state
       fetchCheques();
     }
   };
+
+  // Wrapper to handle special statuses that require additional input
+  const handleStatusSelection = (cheque, newStatus) => {
+    const currentStatus = (cheque.status || "pending").toLowerCase();
+    if (currentStatus === newStatus) return;
+
+    if (newStatus === "cancelled") {
+      setStatusModal({ open: true, type: "cancelled", chequeId: cheque._id, currentStatus, reason: "", clearDate: "" });
+    } else if (newStatus === "clear" || newStatus === "cleared") {
+      // accept 'clear' or 'cleared' keys
+      setStatusModal({ open: true, type: "clear", chequeId: cheque._id, currentStatus, reason: "", clearDate: new Date().toISOString().split("T")[0] });
+    } else if (newStatus === "shifted") {
+      setStatusModal({ open: true, type: "shifted", chequeId: cheque._id, currentStatus, reason: "", clearDate: "", shiftRemark: "" });
+    } else {
+      updateStatus(cheque._id, { status: newStatus });
+    }
+  };
+
+  const handleCloseStatusModal = async () => {
+    setStatusModal({ open: false, type: null, chequeId: null, currentStatus: null, reason: "", clearDate: "" });
+    // Refresh cheques to reset select element to server state (in case user cancelled)
+    await fetchCheques();
+  };
+
+  const confirmStatusChange = async () => {
+    const { chequeId, type, reason, clearDate } = statusModal;
+    const { shiftRemark } = statusModal;
+    if (!chequeId) return;
+
+    if (type === "cancelled") {
+      if (!reason || !reason.trim()) {
+        return alert("Please provide a reason for cancellation.");
+      }
+      await updateStatus(chequeId, { status: "cancelled", cancelReason: reason.trim() });
+      handleCloseStatusModal();
+      return;
+    }
+
+    if (type === "clear") {
+      if (!clearDate) {
+        return alert("Please select the cleared date.");
+      }
+      await updateStatus(chequeId, { status: "clear", clearedDate: clearDate });
+      handleCloseStatusModal();
+      return;
+    }
+    if (type === "shifted") {
+      if (!shiftRemark || !shiftRemark.trim()) {
+        return alert("Please provide a reason for shifting the cheque.");
+      }
+      await updateStatus(chequeId, { status: "shifted", shiftRemark: shiftRemark?.trim() || undefined });
+      handleCloseStatusModal();
+      return;
+    }
+  };
+
+  
 
   // ✅ Handle form submission (POST)
   const handleSubmit = async (e) => {
@@ -757,7 +822,6 @@ const ChequeExpense = () => {
     const expenseEntry = {
       chequeIssuedDate: formData.issuedDate,
       receiverName: formData.toWhom,
-      chequeValid: formData.validity,
       chequeNumber: formData.chequeNumber,
       chequeAmount: formData.amount,
       reasonToIssue: formData.reason,
@@ -794,7 +858,6 @@ const ChequeExpense = () => {
       setFormData({
         issuedDate: "",
         toWhom: "",
-        validity: "",
         amount: "",
         chequeNumber: "",
         reason: "",
@@ -811,7 +874,6 @@ const ChequeExpense = () => {
     setFormData({
       issuedDate: new Date(cheque.chequeIssuedDate).toISOString().split("T")[0],
       toWhom: cheque.receiverName || "",
-      validity: new Date(cheque.chequeValid).toISOString().split("T")[0],
       amount: cheque.chequeAmount || "",
       chequeNumber: cheque.chequeNumber || "",
       reason: cheque.reasonToIssue || "",
@@ -823,12 +885,16 @@ if(cheques)
   return (
     <div className="p-6 bg-gray-50 min-h-screen">
       {/* Status buttons - show at very top for quick access before summary cards */}
-      <div className="flex gap-2 items-center mb-4">
+      <div className="flex gap-2 flex-wrap items-center mb-4">
         {FILTER_OPTIONS.map((s) => (
           <button
             key={`top-${s}`}
             onClick={() => setSelectedTab(s)}
-            className={`px-3 py-1 rounded-md border ${selectedTab === s ? 'bg-black text-white' : 'bg-white text-black'}`}
+            className={`px-3 py-1 rounded-md border text-left transition ${
+              selectedTab === s
+                ? statusBadgeStyles[s] || "bg-black text-white"
+                : "bg-white text-gray-700 hover:bg-gray-100"
+            }`}
             aria-pressed={selectedTab === s}
           >
             <div className="text-sm font-medium capitalize">{s}</div>
@@ -944,13 +1010,12 @@ if(cheques)
             <thead className="bg-gray-100 border-b">
               <tr>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">Entry Date</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">Issued Date</th>
-                <th className="p-3 text-left text-sm font-semibold text-gray-600">To Whom</th>
-                {/* Validity column intentionally hidden from screen */}
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">Cheque Number</th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-600">To Whom</th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">Amount</th>
+                <th className="p-3 text-left text-sm font-semibold text-gray-600">Issued Date</th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">Reason</th>
-                 {/* <th className="p-3 text-left text-sm font-semibold text-gray-600">Issued Date</th> */}
+                <th className="p-3 text-left text-sm font-semibold text-gray-600">Shifted Reason</th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">Status</th>
                 <th className="p-3 text-left text-sm font-semibold text-gray-600">Action</th>
               </tr>
@@ -959,15 +1024,21 @@ if(cheques)
               {finalFilteredCheques.map((cheque) => (
                 <tr key={cheque._id} className="border-b hover:bg-gray-50">
                   <td className="p-3 text-sm text-gray-800">{cheque.entryDate}</td>
-                  <td className="p-3 text-sm text-gray-800">
+                  <td className="p-3 text-sm text-gray-800">{cheque.chequeNumber}</td>
+                  <td className="p-3 text-sm text-gray-800">{cheque.receiverName}</td>
+                  <td className="p-3 text-sm text-gray-800">₹{cheque.chequeAmount}</td>
+                  <td className="p-3 text-sm text-gray-800 font-semibold">
                     {new Date(cheque.chequeIssuedDate).toLocaleDateString()}
                   </td>
-                  <td className="p-3 text-sm text-gray-800">{cheque.receiverName}</td>
-                  {/* Validity value kept in data but not shown in table */}
-                  <td className="p-3 text-sm text-gray-800">{cheque.chequeNumber}</td>
-                  <td className="p-3 text-sm text-gray-800">₹{cheque.chequeAmount}</td>
                   <td className="p-3 text-sm text-gray-800">{cheque.reasonToIssue}</td>
-                  <td className="p-3 text-sm text-gray-800 capitalize">{cheque.status || 'pending'}</td>
+                  <td className="p-3 text-sm text-gray-800">{cheque.shiftRemark || '-'}</td>
+                  <td className="p-3 text-sm">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium capitalize ${statusBadgeStyles[(cheque.status || 'pending').toLowerCase()] || 'bg-gray-100 text-gray-700'}`}
+                    >
+                      {cheque.status || 'pending'}
+                    </span>
+                  </td>
                   <td className="p-3 text-sm text-gray-800">
                     <div className="flex items-center gap-2 whitespace-nowrap">
                       <button
@@ -977,9 +1048,16 @@ if(cheques)
                       >
                         <Edit2 size={16} />
                       </button>
+                    <button
+                      onClick={() => setViewCheque(cheque)}
+                      className="p-1.5 rounded-md bg-gray-700 text-white hover:bg-gray-900 border border-gray-700"
+                      title="View cheque details"
+                    >
+                      <Eye size={16} />
+                    </button>
                       <select
                         value={(cheque.status || 'pending')}
-                        onChange={(e) => updateStatus(cheque._id, e.target.value)}
+                        onChange={(e) => handleStatusSelection(cheque, e.target.value)}
                         className="border px-2 py-1 rounded-md"
                       >
                         {STATUSES.filter(st => st.toLowerCase() !== 'all').map((st) => (
@@ -1058,20 +1136,7 @@ if(cheques)
                   />
                 </div>
 
-                {/* Validity */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Cheque Validity (Date)
-                  </label>
-                  <input
-                    type="date"
-                    name="validity"
-                    value={formData.validity}
-                    onChange={handleChange}
-                    required
-                    className="w-full border rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
+                {/* Validity removed: field omitted by design */}
 
                 {/* Cheque Number */}
                 <div>
@@ -1140,6 +1205,251 @@ if(cheques)
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {statusModal.open && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">
+                {statusModal.type === "cancelled" ? "Cancel Cheque" : "Clear Cheque"}
+              </h2>
+              <button
+                onClick={() => handleCloseStatusModal()}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {statusModal.type === "cancelled" ? (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Cancellation</label>
+                <textarea
+                  rows={4}
+                  value={statusModal.reason}
+                  onChange={(e) => setStatusModal((s) => ({ ...s, reason: e.target.value }))}
+                  className="w-full border rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500"
+                  placeholder="Please describe why this cheque is cancelled"
+                />
+              </div>
+            ) : statusModal.type === 'shifted' ? (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Shifted Reason</label>
+                <textarea
+                  rows={3}
+                  value={statusModal.shiftRemark}
+                  onChange={(e) => setStatusModal((s) => ({ ...s, shiftRemark: e.target.value }))}
+                  className="w-full border rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500"
+                  placeholder="Please describe why this cheque is shifted"
+                />
+              </div>
+            ) : (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cheque Cleared Date</label>
+                <input
+                  type="date"
+                  value={statusModal.clearDate}
+                  onChange={(e) => setStatusModal((s) => ({ ...s, clearDate: e.target.value }))}
+                  className="w-full border rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => handleCloseStatusModal()}
+                className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => confirmStatusChange()}
+                disabled={
+                  (statusModal.type === "cancelled" && !statusModal.reason.trim()) ||
+                  (statusModal.type === "clear" && !statusModal.clearDate) ||
+                  (statusModal.type === "shifted" && (!statusModal.shiftRemark || !statusModal.shiftRemark.trim()))
+                }
+                 className={`px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800 ${((statusModal.type === "cancelled" && !statusModal.reason.trim()) || (statusModal.type === "clear" && !statusModal.clearDate) || (statusModal.type === "shifted" && !statusModal.shiftRemark.trim())) ? 'opacity-40 cursor-not-allowed' : ''}`}
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {viewCheque && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Cheque Details</h2>
+              <button
+                onClick={() => setViewCheque(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Entry Date */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Entry Date
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={viewCheque.entryDate || "-"}
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                  />
+                </div>
+
+                {/* Cheque Issued Date */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cheque Issued Date
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={
+                      viewCheque.chequeIssuedDate
+                        ? new Date(viewCheque.chequeIssuedDate).toLocaleDateString()
+                        : "-"
+                    }
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                  />
+                </div>
+
+                {/* To Whom */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    To Whom Issued
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={viewCheque.receiverName || "-"}
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                  />
+                </div>
+
+                {/* Cheque Number */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cheque Number
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={viewCheque.chequeNumber || "-"}
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                  />
+                </div>
+
+                {/* Amount */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cheque Amount
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={
+                      viewCheque.chequeAmount
+                        ? `₹${viewCheque.chequeAmount}`
+                        : "-"
+                    }
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                  />
+                </div>
+
+                {/* Status */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Status
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    value={(viewCheque.status || "pending").toString()}
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700 capitalize"
+                  />
+                </div>
+
+                {/* Cleared Date (if any) */}
+                {viewCheque.clearedDate && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Cleared Date
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={new Date(viewCheque.clearedDate).toLocaleDateString()}
+                      className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                    />
+                  </div>
+                )}
+
+                {/* Shifted Reason (if any) */}
+                {viewCheque.shiftRemark && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Shifted Reason
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={viewCheque.shiftRemark}
+                      className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Reason to Issue */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Reason to Issue
+                </label>
+                <textarea
+                  readOnly
+                  rows={3}
+                  value={viewCheque.reasonToIssue || "-"}
+                  className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700 resize-none"
+                />
+              </div>
+
+              {/* Cancel Reason (if any) */}
+              {viewCheque.cancelReason && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Cancel Reason
+                  </label>
+                  <textarea
+                    readOnly
+                    rows={3}
+                    value={viewCheque.cancelReason}
+                    className="w-full border rounded-lg p-2 mt-1 bg-gray-50 text-gray-700 resize-none"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end mt-6">
+              <button
+                onClick={() => setViewCheque(null)}
+                className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
