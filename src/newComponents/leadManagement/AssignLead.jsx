@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function AssignLeads() {
   const [employees, setEmployees] = useState([]);
@@ -7,12 +7,17 @@ export default function AssignLeads() {
   const pageSize = 100; // number of leads per page
   const [selectedEmployee, setSelectedEmployee] = useState("");
   const [selectedLeads, setSelectedLeads] = useState([]);
+  const [selectedTargetEmployee, setSelectedTargetEmployee] = useState(""); // for reassigning
+  const [selectedAssignedLeads, setSelectedAssignedLeads] = useState([]); // ids selected in Assigned tab
   const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [loadingLeads, setLoadingLeads] = useState(true);
   const [activeTab, setActiveTab] = useState("assign"); // 'assign' or 'assigned'
   const [assignedLeads, setAssignedLeads] = useState([]);
   const [loadingAssigned, setLoadingAssigned] = useState(false);
   const [assignedIds, setAssignedIds] = useState([]); // ids already assigned to selected employee
+  const [assignedCurrentPage, setAssignedCurrentPage] = useState(1);
+  const selectAllRef = useRef(null);
+  const selectAllAssignedRef = useRef(null);
 
   // Fetch all employees
   useEffect(() => {
@@ -129,6 +134,8 @@ export default function AssignLeads() {
       if (res.ok) {
         const arr = data.data || [];
         setAssignedLeads(arr);
+        // reset assigned leads pagination to first page
+        setAssignedCurrentPage(1);
         // normalize ids to strings for consistent comparisons
         setAssignedIds(arr.map((x) => String(x._id)));
       } else {
@@ -140,6 +147,114 @@ export default function AssignLeads() {
       setAssignedLeads([]);
     } finally {
       setLoadingAssigned(false);
+    }
+  };
+
+  // adjust assigned leads page if length changes and current page becomes out of range
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil((assignedLeads && assignedLeads.length) / pageSize));
+    if (assignedCurrentPage > totalPages) setAssignedCurrentPage(totalPages);
+  }, [assignedLeads, assignedCurrentPage]);
+
+  // compute visible items for current pages
+  const visibleLeads = (leads || [])
+    .filter((l) => !assignedIds.includes(String(l._id)))
+    .slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+  const visibleAssignedLeads = (assignedLeads || []).slice((assignedCurrentPage - 1) * pageSize, assignedCurrentPage * pageSize);
+
+  // Select-all handlers for visible page items
+  const handleSelectAllVisible = () => {
+    const ids = visibleLeads.map((l) => String(l._id));
+    if (ids.length === 0) return;
+    const allSelected = ids.every((id) => selectedLeads.map(String).includes(id));
+    if (allSelected) {
+      // deselect visible
+      setSelectedLeads((prev) => prev.filter((id) => !ids.includes(String(id))));
+    } else {
+      // select visible (keep existing selections)
+      setSelectedLeads((prev) => Array.from(new Set([...(prev || []).map(String), ...ids])));
+    }
+  };
+
+  const handleSelectAllAssignedVisible = () => {
+    const ids = visibleAssignedLeads.map((l) => String(l._id));
+    if (ids.length === 0) return;
+    const allSelected = ids.every((id) => selectedAssignedLeads.map(String).includes(id));
+    if (allSelected) {
+      setSelectedAssignedLeads((prev) => prev.filter((id) => !ids.includes(String(id))));
+    } else {
+      setSelectedAssignedLeads((prev) => Array.from(new Set([...(prev || []).map(String), ...ids])));
+    }
+  };
+
+  // maintain indeterminate state for header checkboxes
+  const allVisibleSelected = visibleLeads.length > 0 && visibleLeads.every((l) => selectedLeads.map(String).includes(String(l._id)));
+  const someVisibleSelected = visibleLeads.some((l) => selectedLeads.map(String).includes(String(l._id)));
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someVisibleSelected && !allVisibleSelected;
+    }
+  }, [someVisibleSelected, allVisibleSelected]);
+
+  const allAssignedVisibleSelected = visibleAssignedLeads.length > 0 && visibleAssignedLeads.every((l) => selectedAssignedLeads.map(String).includes(String(l._id)));
+  const someAssignedVisibleSelected = visibleAssignedLeads.some((l) => selectedAssignedLeads.map(String).includes(String(l._id)));
+  useEffect(() => {
+    if (selectAllAssignedRef.current) {
+      selectAllAssignedRef.current.indeterminate = someAssignedVisibleSelected && !allAssignedVisibleSelected;
+    }
+  }, [someAssignedVisibleSelected, allAssignedVisibleSelected]);
+
+  // Toggle checkbox in Assigned Leads table
+  const handleAssignedLeadCheck = (leadId) => {
+    setSelectedAssignedLeads((prev) =>
+      prev.includes(leadId)
+        ? prev.filter((id) => id !== leadId)
+        : [...prev, leadId]
+    );
+  };
+
+  // Reassign selected assigned leads from one employee to another
+  const reassignSelectedLeads = async () => {
+    if (!selectedEmployee) {
+      alert("Please select a source employee in 'Select Employee'.");
+      return;
+    }
+    if (!selectedTargetEmployee) {
+      alert("Please select a target employee in 'To this Employee'.");
+      return;
+    }
+    if (selectedEmployee === selectedTargetEmployee) {
+      alert("Source and target employee must be different.");
+      return;
+    }
+    if (selectedAssignedLeads.length === 0) {
+      alert("Please select at least one assigned lead to reassign.");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:4000/assignlead/reassign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fromEmployeeId: selectedEmployee,
+          toEmployeeId: selectedTargetEmployee,
+          leadIds: selectedAssignedLeads,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Reassigned ${selectedAssignedLeads.length} lead(s) successfully!`);
+        setSelectedAssignedLeads([]);
+        // refresh the assigned leads list for the currently selected employee
+        fetchAssignedLeads(selectedEmployee);
+      } else {
+        alert("Failed to reassign leads: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error reassigning leads:", err);
+      alert("Error reassigning leads. Check console for details.");
     }
   };
 
@@ -197,7 +312,15 @@ export default function AssignLeads() {
                 <table className="w-full border-collapse border">
                   <thead>
                     <tr className="bg-gray-100">
-                      <th className="border px-3 py-2">Select</th>
+                      <th className="border px-3 py-2 text-center">
+                        <input
+                          type="checkbox"
+                          ref={selectAllRef}
+                          checked={visibleLeads.length > 0 && visibleLeads.every((l) => selectedLeads.map(String).includes(String(l._id)))}
+                          onChange={handleSelectAllVisible}
+                        />
+                        <div className="text-xs">All Select</div>
+                      </th>
                       <th className="border px-3 py-2">Name</th>
                       <th className="border px-3 py-2">Email</th>
                       <th className="border px-3 py-2">Phone</th>
@@ -268,26 +391,56 @@ export default function AssignLeads() {
         <div>
           <h2 className="text-2xl font-semibold mb-4">Assigned Leads</h2>
 
-          <label className="block mb-2 font-medium">Select Employee</label>
-          {loadingEmployees ? (
-            <p>Loading employees...</p>
-          ) : (
-            <select
-              className="w-full border px-3 py-2 rounded mb-5"
-              value={selectedEmployee}
-              onChange={(e) => {
-                setSelectedEmployee(e.target.value);
-                fetchAssignedLeads(e.target.value);
-              }}
-            >
-              <option value="">-- Select an Employee --</option>
-              {employees?.map((emp) => (
-                <option key={emp._id} value={emp._id}>
-                  {emp.fullName}
-                </option>
-              ))}
-            </select>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <div>
+              <label className="block mb-2 font-medium">Select Employee</label>
+              {loadingEmployees ? (
+                <p>Loading employees...</p>
+              ) : (
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={selectedEmployee}
+                  onChange={(e) => {
+                    const empId = e.target.value;
+                    setSelectedEmployee(empId);
+                    setSelectedAssignedLeads([]); // clear any previous selection
+                    // clear any previously chosen target when source changes
+                    setSelectedTargetEmployee("");
+                    fetchAssignedLeads(empId);
+                  }}
+                >
+                  <option value="">-- Select an Employee --</option>
+                  {employees?.map((emp) => (
+                    <option key={emp._id} value={emp._id}>
+                      {emp.fullName}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </div>
+
+            <div>
+              <label className="block mb-2 font-medium">To this Employee</label>
+              {loadingEmployees ? (
+                <p>Loading employees...</p>
+              ) : (
+                <select
+                  className="w-full border px-3 py-2 rounded"
+                  value={selectedTargetEmployee}
+                  onChange={(e) => setSelectedTargetEmployee(e.target.value)}
+                >
+                  <option value="">-- Select Target Employee --</option>
+                  {employees
+                    ?.filter((emp) => String(emp._id) !== String(selectedEmployee))
+                    .map((emp) => (
+                      <option key={emp._id} value={emp._id}>
+                        {emp.fullName}
+                      </option>
+                    ))}
+                </select>
+              )}
+            </div>
+          </div>
 
           {loadingAssigned ? (
             <p>Loading assigned leads...</p>
@@ -296,30 +449,82 @@ export default function AssignLeads() {
               {assignedLeads.length === 0 ? (
                 <p>No assigned leads for the selected employee.</p>
               ) : (
-                <div className="overflow-x-auto">
-                  <table className="w-full border-collapse border">
-                    <thead>
-                      <tr className="bg-gray-100">
-                        <th className="border px-3 py-2">Name</th>
-                        <th className="border px-3 py-2">Email</th>
-                        <th className="border px-3 py-2">Phone</th>
-                        <th className="border px-3 py-2">WhatsApp No</th>
-                        <th className="border px-3 py-2">Destination</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {assignedLeads.map((lead) => (
-                        <tr key={lead._id}>
-                          <td className="border px-3 py-2">{lead.name}</td>
-                          <td className="border px-3 py-2">{lead.email}</td>
-                          <td className="border px-3 py-2">{lead.phone}</td>
-                          <td className="border px-3 py-2">{lead.whatsAppNo}</td>
-                          <td className="border px-3 py-2">{lead.destination}</td>
+                <>
+                  <div className="overflow-x-auto">
+                    <table className="w-full border-collapse border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                            <th className="border px-3 py-2 text-center">
+                              <input
+                                type="checkbox"
+                                ref={selectAllAssignedRef}
+                                checked={visibleAssignedLeads.length > 0 && visibleAssignedLeads.every((l) => selectedAssignedLeads.map(String).includes(String(l._id)))}
+                                onChange={handleSelectAllAssignedVisible}
+                              />
+                              <div className="text-xs">All Select</div>
+                            </th>
+                          <th className="border px-3 py-2">Name</th>
+                          <th className="border px-3 py-2">Email</th>
+                          <th className="border px-3 py-2">Phone</th>
+                          <th className="border px-3 py-2">WhatsApp No</th>
+                          <th className="border px-3 py-2">Destination</th>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                      </thead>
+                      <tbody>
+                        {(
+                          (assignedLeads || [])
+                            .slice((assignedCurrentPage - 1) * pageSize, assignedCurrentPage * pageSize)
+                        ).map((lead) => (
+                          <tr key={lead._id}>
+                            <td className="border px-3 py-2 text-center">
+                              <input
+                                type="checkbox"
+                                checked={selectedAssignedLeads.includes(lead._id)}
+                                onChange={() => handleAssignedLeadCheck(lead._id)}
+                              />
+                            </td>
+                            <td className="border px-3 py-2">{lead.name}</td>
+                            <td className="border px-3 py-2">{lead.email}</td>
+                            <td className="border px-3 py-2">{lead.phone}</td>
+                            <td className="border px-3 py-2">{lead.whatsAppNo}</td>
+                            <td className="border px-3 py-2">{lead.destination}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                    {/* Pagination controls for Assigned Leads */}
+                    <div className="flex items-center justify-between mt-3">
+                      <div className="text-sm text-gray-600">
+                        Showing {Math.min((assignedCurrentPage - 1) * pageSize + 1, assignedLeads.length || 0)} to {Math.min(assignedCurrentPage * pageSize, assignedLeads.length || 0)} of {assignedLeads.length || 0} leads
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setAssignedCurrentPage((p) => Math.max(1, p - 1))}
+                          disabled={assignedCurrentPage === 1}
+                          className={`px-3 py-1 rounded ${assignedCurrentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white border'}`}
+                        >
+                          Previous
+                        </button>
+                        <div className="text-sm">Page {assignedCurrentPage} of {Math.max(1, Math.ceil((assignedLeads.length || 0) / pageSize))}</div>
+                        <button
+                          onClick={() => setAssignedCurrentPage((p) => Math.min(Math.max(1, Math.ceil((assignedLeads.length || 0) / pageSize)), p + 1))}
+                          disabled={assignedCurrentPage >= Math.ceil((assignedLeads.length || 0) / pageSize)}
+                          className={`px-3 py-1 rounded ${assignedCurrentPage >= Math.ceil((assignedLeads.length || 0) / pageSize) ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white border'}`}
+                        >
+                          Next
+                        </button>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={reassignSelectedLeads}
+                      className="mt-5 bg-blue-600 text-white px-5 py-2 rounded hover:bg-blue-700"
+                    >
+                      Reassign Selected Leads
+                    </button>
+                </>
               )}
             </div>
           )}
