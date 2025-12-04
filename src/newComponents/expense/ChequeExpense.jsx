@@ -550,11 +550,25 @@ const ChequeExpense = () => {
     reason: "",
     entryDate: new Date().toISOString().split("T")[0], // today's date auto-filled
   });
+  const [duplicateError, setDuplicateError] = useState("");
 
-  // ✅ Handle input changes
+  // ✅ Handle input changes and check for duplicate cheque number
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({ ...formData, [name]: value });
+    
+    // Check for duplicate cheque number in real-time
+    if (name === "chequeNumber") {
+      const trimmedValue = value.trim();
+      if (trimmedValue) {
+        const isDuplicate = cheques.some(
+          (c) => c.chequeNumber && c.chequeNumber.toString().trim().toLowerCase() === trimmedValue.toLowerCase() && c._id !== editingChequeId
+        );
+        setDuplicateError(isDuplicate ? "Duplicate cheque number" : "");
+      } else {
+        setDuplicateError("");
+      }
+    }
   };
 
   // ✅ Fetch all cheques from backend
@@ -844,14 +858,21 @@ const ChequeExpense = () => {
         body: JSON.stringify(expenseEntry),
       });
 
-      if (!res.ok) throw new Error("Failed to save cheque expense");
+      const data = await res.json().catch(() => null);
+      // Surface duplicate error message from server to user 
+      if (!res.ok) {
+        if (data && data.message && data.message.toLowerCase().includes('duplicate')) {
+          return alert(data.message);
+        }
+        throw new Error(data?.message || "Failed to save cheque expense");
+      }
 
-      const data = await res.json();
-      console.log("✅ Cheque Expense Saved:", data);
+      console.log(" Cheque Expense Saved:", data);
 
       alert(editingChequeId ? "Cheque expense updated successfully!" : "Cheque expense added successfully!");
       setShowModal(false);
       setEditingChequeId(null);
+      setDuplicateError("");
       fetchCheques(); // ✅ Refresh list after adding/ editing cheque
 
       // Reset form
@@ -864,7 +885,7 @@ const ChequeExpense = () => {
         entryDate: new Date().toISOString().split("T")[0],
       });
     } catch (error) {
-      console.error("❌ Error saving cheque expense:", error);
+      console.error(" Error saving cheque expense:", error);
       alert("Error saving cheque expense. Please try again.");
     }
   };
@@ -902,7 +923,7 @@ if(cheques)
           </button>
         ))}
       </div>
-      {/* ✅ Summary Cards */}
+      {/*  Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="rounded-md border border-gray-300 bg-white p-4">
             <div className="text-lg font-semibold text-gray-800 mb-1">
@@ -920,7 +941,7 @@ if(cheques)
         </div>
       </div>
 
-      {/* ✅ Header + Add Button and Tabs */}
+      {/*  Header + Add Button and Tabs */}
       <div className="flex justify-between items-center mb-4">
       <div className="flex items-center gap-4">
           <h2 className="text-xl font-semibold">Cheque Expenses</h2>
@@ -1150,8 +1171,13 @@ if(cheques)
                     onChange={handleChange}
                     placeholder="Enter cheque number"
                     required
-                    className="w-full border rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500"
+                    className={`w-full border rounded-lg p-2 mt-1 focus:ring-2 focus:ring-blue-500 ${
+                      duplicateError ? "border-red-500" : "border-gray-300"
+                    }`}
                   />
+                  {duplicateError && (
+                    <p className="text-red-500 text-sm mt-1">{duplicateError}</p>
+                  )}
                 </div>
 
                 {/* Amount */}
@@ -1192,14 +1218,19 @@ if(cheques)
               <div className="flex justify-end gap-3 mt-6">
                 <button
                   type="button"
-                  onClick={() => { setShowModal(false); setEditingChequeId(null); }}
+                  onClick={() => { setShowModal(false); setEditingChequeId(null); setDuplicateError(""); }}
                   className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 rounded-lg bg-black text-white hover:bg-gray-800"
+                  disabled={!!duplicateError}
+                  className={`px-4 py-2 rounded-lg text-white ${
+                    duplicateError
+                      ? "bg-gray-400 cursor-not-allowed"
+                      : "bg-black hover:bg-gray-800"
+                  }`}
                 >
                   {editingChequeId ? "Update Cheque Expense" : "Add Cheque Expense"}
                 </button>
