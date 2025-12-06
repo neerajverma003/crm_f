@@ -6,11 +6,13 @@ import SearchStatus from "./SearchStatus.jsx";
 import AddLead from "./AddLead.jsx";
 import LeadTable from "./LeadTable.jsx";
 import LeadCards from "./LeadCards.jsx";
+import MyAssignedLeads from "./MyAssignedLeads.jsx";
 
 const MainLeadManagement = () => {
   const [searchText, setSearchText] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("All Status");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [activeTab, setActiveTab] = useState("all-leads");
 
   // Handle search text change
   const handleSearchChange = useCallback((text) => {
@@ -36,50 +38,74 @@ const MainLeadManagement = () => {
           <p className="text-sm xl:text-base text-gray-600">Track and manage your sales leads efficiently</p>
         </div>
 
-        {/* Stats Cards */}
-        {/* <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3 xl:gap-4 mb-4 xl:mb-6">
-          {cardData.map((card, index) => (
-            <MyCards
-              key={`lead-card-${index}-${card.title}`}
-              title={card.title}
-              value={card.value}
-              icon={card.icon}
-              description={card.description}
-            />
-          ))}
-        </div> */}
-        <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3 xl:gap-4 mb-4 xl:mb-6">
-          <LeadCards/>
-        </div>
-        {/* Filters and Actions */}
-        <div className="mb-4 xl:mb-6 flex flex-col gap-3 xl:flex-row xl:gap-4 xl:justify-between xl:items-center">
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full xl:w-auto min-w-0">
-            <div className="flex-1 max-w-xs min-w-0">
-              <SearchLead 
-                onSearchChange={handleSearchChange}
-                placeholder="Search leads..."
-              />
-            </div>
-            <div className="flex-shrink-0">
-              <SearchStatus 
-                onStatusChange={handleStatusChange}
-                selectedStatus={selectedStatus}
-              />
-            </div>
-          </div>
-          <div className="flex-shrink-0">
-            <AddLead onLeadAdded={handleLeadAdded} />
-          </div>
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-3 mb-4">
+          <button
+            onClick={() => setActiveTab("all-leads")}
+            className={`px-4 py-2 rounded ${activeTab === 'all-leads' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
+          >
+            All Leads
+          </button>
+          <button
+            onClick={() => setActiveTab("assigned")}
+            className={`px-4 py-2 rounded ${activeTab === 'assigned' ? 'bg-blue-600 text-white' : 'bg-gray-100'}`}
+          >
+            Assigned Leads
+          </button>
         </div>
 
-        {/* Lead Table */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[400px] w-full overflow-hidden">
-          <LeadTable 
-            searchText={searchText}
-            selectedStatus={selectedStatus}
-            refreshTrigger={refreshTrigger}
-          />
-        </div>
+        {activeTab === "all-leads" ? (
+          <>
+            {/* Stats Cards */}
+            {/* <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3 xl:gap-4 mb-4 xl:mb-6">
+              {cardData.map((card, index) => (
+                <MyCards
+                  key={`lead-card-${index}-${card.title}`}
+                  title={card.title}
+                  value={card.value}
+                  icon={card.icon}
+                  description={card.description}
+                />
+              ))}
+            </div> */}
+            <div className="grid grid-cols-2 xl:grid-cols-4 gap-2 sm:gap-3 xl:gap-4 mb-4 xl:mb-6">
+              <LeadCards/>
+            </div>
+            {/* Filters and Actions */}
+            <div className="mb-4 xl:mb-6 flex flex-col gap-3 xl:flex-row xl:gap-4 xl:justify-between xl:items-center">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full xl:w-auto min-w-0">
+                <div className="flex-1 max-w-xs min-w-0">
+                  <SearchLead 
+                    onSearchChange={handleSearchChange}
+                    placeholder="Search leads..."
+                  />
+                </div>
+                <div className="flex-shrink-0">
+                  <SearchStatus 
+                    onStatusChange={handleStatusChange}
+                    selectedStatus={selectedStatus}
+                  />
+                </div>
+              </div>
+              <div className="flex-shrink-0">
+                <AddLead onLeadAdded={handleLeadAdded} />
+              </div>
+            </div>
+
+            {/* Lead Table */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[400px] w-full overflow-hidden">
+              <LeadTable 
+                searchText={searchText}
+                selectedStatus={selectedStatus}
+                refreshTrigger={refreshTrigger}
+              />
+            </div>
+          </>
+        ) : (
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 min-h-[400px] w-full overflow-hidden">
+            <MyAssignedLeads />
+          </div>
+        )}
       </div>
     </div>
   );

@@ -54,6 +54,7 @@ const Sidebar = () => {
         { id: "2-3", label: "Today's Leads", url: "/todaysleads" },
         { id: "2-4", label: "Follow-Up Leads", url: "/followupleads" },
         { id: "2-5", label: "Lead Reports", url: "/leadreports" },
+        { id: "2-6", label: "Assign Destination", url: "/assigndestination" },
       ],
     },
 
@@ -91,7 +92,6 @@ const Sidebar = () => {
         { id: "5-2", label: "Assign Company", url: "/employeecompany" },
         { id: "5-3", label: "Assign Role", url: "/assignemployeerole" },
         { id: "5-4", label: "Create Destination", url: "/createdestinationemployee" },
-        { id: "5-5", label: "Assign Destination", url: "/assigndestination" },
       ],
     },
 

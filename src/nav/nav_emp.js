@@ -17,6 +17,23 @@ const navigation = [
   },
   {
     component: 'CNavGroup',
+    name: 'Lead Management',
+    icon: 'cil-briefcase',
+    items: [
+      {
+        component: 'CNavItem',
+        name: 'My Leads',
+        to: '/myleads'
+      },
+      {
+        component: 'CNavItem',
+        name: 'My Assigned Lead',
+        to: '/myleads?tab=assigned'
+      }
+    ]
+  },
+  {
+    component: 'CNavGroup',
     name: 'User Management',
     icon: 'cil-user',
     items: [
