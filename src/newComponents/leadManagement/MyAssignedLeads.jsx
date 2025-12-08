@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Edit2, Eye, X, AlertCircle } from "lucide-react";
 import DestinationSearchBox from "../../components/DestinationSearchBox";
+import { findEmployeeByDestination } from "../../utils/destinationRouting";
 
 const tripDurations = [
   "1n/2d","2n/3d","3n/4d","4n/5d","5n/6d","6n/7d","7n/8d","8n/9d","9n/10d",
@@ -410,25 +411,106 @@ export default function MyAssignedLeads() {
   const handleUpdateLead = async (data) => {
     if (!editLead) return;
     
-    const payload = { ...data };
     try {
-      const res = await fetch(`http://localhost:4000/assignlead/${editLead._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Failed to update lead");
+      // Check if destination has changed
+      const destinationChanged = editLead.destination !== data.destination;
+      console.log("🔍 Checking lead update...");
+      console.log("Old destination:", editLead.destination);
+      console.log("New destination:", data.destination);
+      console.log("Destination changed?:", destinationChanged);
+      
+      if (destinationChanged && data.destination) {
+        // DESTINATION HAS CHANGED → Check for transfer to "Assigned by Destination"
+        console.log("🔄 Destination changed, checking for routing...");
+        const targetEmployee = await findEmployeeByDestination(data.destination, employeeId);
+        
+        if (targetEmployee && targetEmployee._id !== employeeId) {
+          // Different employee has this destination → Transfer to their "Assigned by Destination"
+          console.log("✅ Different employee assigned to destination, transferring to:", targetEmployee.fullName);
+          
+          // Create employee lead with routing info
+          const employeeLeadPayload = {
+            ...data,
+            employee: targetEmployee._id,
+            routedFromEmployee: employeeId,
+            isActioned: false,
+          };
+          
+          console.log("📤 Sending employee lead payload:", employeeLeadPayload);
+          
+          const res = await fetch("http://localhost:4000/employeelead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(employeeLeadPayload),
+          });
+          
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to route lead");
+          }
+          
+          const responseData = await res.json();
+          console.log("✅ Lead routed successfully:", responseData);
+          
+          // Show success message
+          alert(`✅ Lead successfully transferred to ${targetEmployee.fullName}'s "Assigned by Destination" tab.`);
+          
+          // Remove from assigned leads list
+          setAssignedLeads((prev) => prev.filter((lead) => lead._id !== editLead._id));
+          setEditLead(null);
+          return;
+        } else if (targetEmployee && targetEmployee._id === employeeId) {
+          // SAME employee has this destination → Just update normally (don't route)
+          console.log("✅ Same employee assigned to destination, updating normally");
+          
+          const payload = { ...data };
+          const res = await fetch(`http://localhost:4000/assignlead/${editLead._id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to update lead");
+          }
+          
+          setAssignedLeads((prev) =>
+            prev.map((lead) => (lead._id === editLead._id ? { ...lead, ...payload } : lead))
+          );
+          
+          setEditLead(null);
+          return;
+        } else {
+          // NO employee assigned to this destination → Show error
+          console.warn("⚠️ No employee assigned to destination:", data.destination);
+          alert(`No employee is assigned to the destination "${data.destination}". Please select a destination with an assigned employee.`);
+          return;
+        }
+      } else {
+        // DESTINATION NOT CHANGED → Just update normally
+        console.log("📝 No destination change, updating normally...");
+        const payload = { ...data };
+        const res = await fetch(`http://localhost:4000/assignlead/${editLead._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "Failed to update lead");
+        }
+
+        // Update the local state
+        setAssignedLeads((prev) =>
+          prev.map((lead) => (lead._id === editLead._id ? { ...lead, ...payload } : lead))
+        );
+
+        setEditLead(null);
       }
-
-      // Update the local state
-      setAssignedLeads((prev) =>
-        prev.map((lead) => (lead._id === editLead._id ? { ...lead, ...payload } : lead))
-      );
-
-      setEditLead(null);
     } catch (err) {
+      console.error("Error updating lead:", err);
       throw err;
     }
   };

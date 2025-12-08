@@ -759,7 +759,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, AlertCircle, Eye, Edit2, X } from "lucide-react";
 import DestinationSearchBox from "../../components/DestinationSearchBox";
-import { handleDestinationBasedRouting, fetchLeadsAssignedByDestination } from "../../utils/destinationRouting";
+import { handleDestinationBasedRouting, fetchLeadsAssignedByDestination, findEmployeeByDestination } from "../../utils/destinationRouting";
 
 // 🧩 Dropdown Options
 const leadSources = [
@@ -1099,8 +1099,14 @@ const EmployeeLeads = () => {
       const res = await fetch(`http://localhost:4000/employeelead/employee/${employeeId}`);
       if (!res.ok) throw new Error(`Server Error: ${res.status}`);
       const data = await res.json();
-      // Show only leads created by this employee (not routed from others)
-      const ownLeads = (data.leads || []).filter((lead) => !lead.routedFromEmployee);
+      console.log("📥 All leads from API:", data.leads);
+      // Show leads that are: (1) created by this employee OR (2) routed to them AND they've taken action
+      const ownLeads = (data.leads || []).filter((lead) => {
+        const shouldInclude = !lead.routedFromEmployee || (lead.routedFromEmployee && lead.isActioned);
+        console.log(`Lead: ${lead.name}, routedFromEmployee: ${lead.routedFromEmployee}, isActioned: ${lead.isActioned}, shouldInclude: ${shouldInclude}`);
+        return shouldInclude;
+      });
+      console.log("📊 Filtered own leads:", ownLeads);
       setLeads(ownLeads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch (err) {
       setError(err.message || "Failed to fetch leads");
@@ -1137,8 +1143,12 @@ const EmployeeLeads = () => {
     setDestAssignedLoading(true);
     try {
       const leads = await fetchLeadsAssignedByDestination(employeeId);
-      // Show only leads that were routed from another employee (have routedFromEmployee field)
-      const routedLeads = leads.filter((lead) => lead.routedFromEmployee && lead.routedFromEmployee !== employeeId);
+      // Show only leads that were routed from another employee AND have NOT been actioned yet
+      const routedLeads = leads.filter((lead) => 
+        lead.routedFromEmployee && 
+        lead.routedFromEmployee !== employeeId && 
+        !lead.isActioned
+      );
       setDestinationAssignedLeads(routedLeads.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch (err) {
       console.error("Error fetching destination-assigned leads:", err);
@@ -1151,6 +1161,14 @@ const EmployeeLeads = () => {
   useEffect(() => { 
     fetchLeads(); 
   }, []);
+
+  // Refetch leads when "my-leads" tab is activated
+  useEffect(() => {
+    if (activeTab === "my-leads") {
+      console.log("📱 'My Leads' tab activated, refetching...");
+      fetchLeads();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === "assigned") {
@@ -1191,7 +1209,21 @@ const EmployeeLeads = () => {
   const handleView = (lead) => setViewLead(lead);
   const handleEdit = (lead) => setEditLead(lead);
   const handleEditAssigned = (lead) => setEditAssignedLead(lead);
-  const handleEditDestAssigned = (lead) => setEditDestAssignedLead(lead);
+  
+  const handleEditDestAssigned = async (lead) => {
+    // Mark lead as actioned when employee takes action on routed lead
+    try {
+      await fetch(`http://localhost:4000/employeelead/action/${lead._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+      console.log("✅ Lead marked as actioned");
+    } catch (err) {
+      console.error("Error marking lead as actioned:", err);
+    }
+    setEditDestAssignedLead(lead);
+  };
+  
   const closeModal = () => {
     setViewLead(null);
     setEditLead(null);
@@ -1324,6 +1356,132 @@ const EmployeeLeads = () => {
     // refresh assigned leads as well in case edited data appears there
     await fetchAssignedLeads();
     setEditLead(null);
+  };
+
+  const handleUpdateDestAssignedLead = async (data) => {
+    if (!editDestAssignedLead) return;
+    
+    try {
+      // Check if destination has changed
+      const destinationChanged = editDestAssignedLead.destination !== data.destination;
+      console.log("🔍 Checking lead update...");
+      console.log("Old destination:", editDestAssignedLead.destination);
+      console.log("New destination:", data.destination);
+      console.log("Destination changed?:", destinationChanged);
+      
+      if (destinationChanged && data.destination) {
+        // DESTINATION HAS CHANGED → Check for transfer
+        console.log("🔄 Destination changed, checking for routing...");
+        
+        // Find employee assigned to the new destination
+        const targetEmployee = await findEmployeeByDestination(data.destination, employeeId);
+        
+        if (targetEmployee && targetEmployee._id !== employeeId) {
+          // New destination assigned to DIFFERENT employee → TRANSFER lead
+          console.log("✅ Different employee assigned, transferring to:", targetEmployee.fullName);
+          
+          const payload = {
+            ...data,
+            employee: targetEmployee._id,
+            routedFromEmployee: editDestAssignedLead.routedFromEmployee || employeeId,
+            isActioned: false,
+          };
+          
+          const res = await fetch(`http://localhost:4000/employeelead/${editDestAssignedLead._id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to transfer lead");
+          }
+          
+          console.log("✅ Lead transferred successfully");
+          
+          // Remove from destination-assigned list
+          setDestinationAssignedLeads((prev) => 
+            prev.filter((lead) => lead._id !== editDestAssignedLead._id)
+          );
+          setEditDestAssignedLead(null);
+          return;
+        } else if (targetEmployee && targetEmployee._id === employeeId) {
+          // New destination assigned to SAME employee → MOVE to "My Leads"
+          console.log("✅ Same employee assigned to destination, moving to My Leads");
+          
+          const payload = {
+            ...data,
+            employee: employeeId,
+            routedFromEmployee: null, // Clear routing since it's now personal lead
+            isActioned: false,
+          };
+          
+          const res = await fetch(`http://localhost:4000/employeelead/${editDestAssignedLead._id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+          
+          if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            throw new Error(err.message || "Failed to update lead");
+          }
+          
+          console.log("✅ Lead moved to My Leads");
+          
+          // Remove from destination-assigned list
+          setDestinationAssignedLeads((prev) => 
+            prev.filter((lead) => lead._id !== editDestAssignedLead._id)
+          );
+          
+          // Refetch "My Leads" to show the newly moved lead
+          await fetchLeads();
+          setEditDestAssignedLead(null);
+          return;
+        } else {
+          // NO employee assigned to this destination → show error
+          console.warn("⚠️ No employee assigned to destination:", data.destination);
+          alert(`No employee is assigned to the destination "${data.destination}". Please select a destination with an assigned employee.`);
+          return;
+        }
+      } else {
+        // DESTINATION NOT CHANGED → Move to "My Leads" (convert from routed to personal lead)
+        console.log("📝 No destination change, moving to My Leads...");
+        
+        const payload = {
+          ...data,
+          employee: employeeId,
+          routedFromEmployee: null, // Clear routing metadata
+          isActioned: false,
+        };
+        
+        const res = await fetch(`http://localhost:4000/employeelead/${editDestAssignedLead._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.message || "Failed to update lead");
+        }
+        
+        console.log("✅ Lead moved to My Leads");
+        
+        // Remove from destination-assigned list
+        setDestinationAssignedLeads((prev) => 
+          prev.filter((lead) => lead._id !== editDestAssignedLead._id)
+        );
+        
+        // Refetch "My Leads" to show the newly moved lead
+        await fetchLeads();
+        setEditDestAssignedLead(null);
+      }
+    } catch (err) {
+      console.error("Error updating destination-assigned lead:", err);
+      throw err;
+    }
   };
 
   const formatDate = (dateString) => {
@@ -1541,7 +1699,7 @@ const EmployeeLeads = () => {
                               <div className="flex-1 overflow-y-auto p-4">
                                 <LeadForm
                                   initialData={editDestAssignedLead}
-                                  onSubmit={handleUpdateLead}
+                                  onSubmit={handleUpdateDestAssignedLead}
                                   onClose={closeModal}
                                 />
                                 <div className="text-xs text-gray-500 mt-2">This lead was automatically assigned to you based on destination matching.</div>
