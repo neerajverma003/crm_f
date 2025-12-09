@@ -1806,7 +1806,11 @@ const EditModal = ({ attendance, onClose, onSave }) => {
 /* 👨‍💼 EMPLOYEE TABLE COMPONENT */
 /* -------------------------------------------------------------------------- */
 
-const EmployeeTable = () => {
+const EmployeeTable = ({ searchText = "" }) => {
+  const userId = localStorage.getItem("userId");
+  const role = localStorage.getItem("role");
+  const token = localStorage.getItem("token");
+
   const [employeeData, setEmployeeData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingAttendance, setEditingAttendance] = useState(null);
@@ -1814,10 +1818,14 @@ const EmployeeTable = () => {
   const [viewAttendance, setViewAttendance] = useState(null);
   const [companyName, setCompanyName] = useState("");
   const [adminView, setAdminView] = useState("Employee Attendance");
-
-  const userId = localStorage.getItem("userId");
-  const role = localStorage.getItem("role");
-  const token = localStorage.getItem("token");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [dateRangeStart, setDateRangeStart] = useState(
+    role?.toLowerCase() === "admin" && adminView === "Employee Attendance"
+      ? new Date().toISOString().split("T")[0]
+      : ""
+  );
+  const [dateRangeEnd, setDateRangeEnd] = useState("");
 
   useEffect(() => {
     const fetchAttendance = async () => {
@@ -1853,6 +1861,13 @@ const EmployeeTable = () => {
 
     fetchAttendance();
   }, [userId, role, token, adminView]);
+
+  // ✅ Set default date filter to today for admin Employee Attendance view
+  useEffect(() => {
+    if (role?.toLowerCase() === "admin" && adminView === "Employee Attendance" && !dateRangeStart) {
+      setDateRangeStart(new Date().toISOString().split("T")[0]);
+    }
+  }, [adminView, role]);
 
   const handleSave = async (updatedData) => {
     try {
@@ -1906,21 +1921,110 @@ const EmployeeTable = () => {
     return "-";
   };
 
-  const filteredData =
-    selectedStatus === "All Status"
-      ? employeeData
-      : employeeData.filter((u) => u.status === selectedStatus);
+  const filteredData = (() => {
+    let data = employeeData;
+
+    // ✅ For admin: apply date filter (single date or range)
+    if (role?.toLowerCase() === "admin" && adminView === "Employee Attendance") {
+      if (dateRangeStart) {
+        // If both dates are set, filter as range; if only start date is set, filter as single date
+        const endDate = dateRangeEnd || dateRangeStart;
+        data = data.filter((u) => {
+          const recordDate = new Date(u.date).toISOString().split("T")[0];
+          return recordDate >= dateRangeStart && recordDate <= endDate;
+        });
+      }
+    }
+
+    // Filter by status
+    if (selectedStatus !== "All Status") {
+      data = data.filter((u) => u.status === selectedStatus);
+    }
+
+    // Filter by search text (name)
+    if (searchText.trim()) {
+      const lowerSearchText = searchText.toLowerCase().trim();
+      data = data.filter((u) => {
+        const employeeName = (u.employee?.fullName || u.admin?.fullName || "").toLowerCase();
+        const email = (u.employee?.email || u.admin?.email || "").toLowerCase();
+        return employeeName.includes(lowerSearchText) || email.includes(lowerSearchText);
+      });
+    }
+
+    return data;
+  })();
+
+  // ✅ Pagination logic - Only apply when no date filter
+  const shouldPaginate = !dateRangeStart;
+  const totalPages = shouldPaginate ? Math.ceil(filteredData.length / itemsPerPage) : 1;
+  const startIndex = shouldPaginate ? (currentPage - 1) * itemsPerPage : 0;
+  const endIndex = shouldPaginate ? startIndex + itemsPerPage : filteredData.length;
+  const paginatedData = filteredData.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus, searchText, dateRangeStart, dateRangeEnd]);
 
   return (
     <div className="border border-gray-200 rounded-md bg-white overflow-x-auto">
       {/* ✅ Filter + View Selector */}
       {["admin", "superadmin"].includes(role?.toLowerCase()) && (
-        <div className="flex justify-between items-center p-3">
-          <AllStatus onSelect={(status) => setSelectedStatus(status)} />
-          <AdminViewSelect
-            selectedView={adminView}
-            onChange={(view) => setAdminView(view)}
-          />
+        <div className="flex flex-col gap-4 p-4 border-b border-gray-200">
+          {/* Row 1: Status Filter + View Selector */}
+          <div className="flex justify-between items-center flex-wrap gap-3">
+            <AllStatus onSelect={(status) => setSelectedStatus(status)} />
+            <AdminViewSelect
+              selectedView={adminView}
+              onChange={(view) => setAdminView(view)}
+            />
+          </div>
+
+          {/* Row 2: Date Range Filter (only for admin Employee Attendance view) */}
+          {role?.toLowerCase() === "admin" && adminView === "Employee Attendance" && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <label className="text-sm font-medium text-gray-700 min-w-fit">
+                Date Filter:
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  placeholder="From"
+                  value={dateRangeStart}
+                  onChange={(e) => setDateRangeStart(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                />
+                {dateRangeStart && (
+                  <>
+                    <span className="text-gray-500 text-sm font-medium">to</span>
+                    <input
+                      type="date"
+                      placeholder="To"
+                      value={dateRangeEnd}
+                      onChange={(e) => setDateRangeEnd(e.target.value)}
+                      className="border border-gray-300 rounded-md px-3 py-2 text-sm"
+                    />
+                  </>
+                )}
+              </div>
+              {dateRangeStart && (
+                <button
+                  onClick={() => {
+                    setDateRangeStart("");
+                    setDateRangeEnd("");
+                  }}
+                  className="px-2 py-1 text-xs bg-red-100 hover:bg-red-200 rounded text-red-700 font-medium"
+                >
+                  Clear
+                </button>
+              )}
+              {dateRangeStart && dateRangeEnd && (
+                <span className="text-xs text-gray-500">
+                  ({dateRangeStart} {dateRangeEnd && `to ${dateRangeEnd}`})
+                </span>
+              )}
+            </div>
+          )}
         </div>
       )}
 
@@ -1954,7 +2058,7 @@ const EmployeeTable = () => {
               </td>
             </tr>
           ) : (
-            filteredData.map((u) => (
+            paginatedData.map((u) => (
               <tr key={u._id} className="hover:bg-gray-50 transition-colors">
                 <td className="p-3">
                   <div className="flex items-center gap-3">
@@ -2028,7 +2132,50 @@ const EmployeeTable = () => {
         </tbody>
       </table>
 
-      {/* Edit Modal */}
+      {/* ✅ Pagination Controls - Only show when no date filter is applied */}
+      {filteredData.length > 0 && !dateRangeStart && (
+        <div className="flex items-center justify-between p-4 border-t border-gray-200">
+          <div className="text-sm text-gray-600">
+            Showing <span className="font-semibold">{startIndex + 1}</span> to{" "}
+            <span className="font-semibold">{Math.min(endIndex, filteredData.length)}</span> of{" "}
+            <span className="font-semibold">{filteredData.length}</span> records
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              Previous
+            </button>
+
+            <div className="flex items-center gap-1">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`px-3 py-2 rounded text-sm font-medium ${
+                    currentPage === page
+                      ? "bg-blue-600 text-white"
+                      : "border border-gray-300 hover:bg-gray-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button
+              onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-2 rounded border border-gray-300 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
       {editingAttendance && (
         <EditModal
           attendance={editingAttendance}

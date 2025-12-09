@@ -88,11 +88,11 @@ const CreateState = () => {
       : states.filter((d) => d.type === filterType);
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-6 text-center">Create State</h2>
+    <div className="max-w-7xl mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-5 text-left">Create State</h2>
 
       {/* ✅ Type Checkboxes */}
-      <div className="flex gap-6 mb-6 justify-center">
+      <div className="flex gap-6 mb-6 justify-left">
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -102,7 +102,7 @@ const CreateState = () => {
           Domestic
         </label>
 
-        <label className="flex items-center gap-2">
+        <label className="flex items-left gap-2">
           <input
             type="checkbox"
             checked={stateType === "International"}
@@ -113,7 +113,7 @@ const CreateState = () => {
       </div>
 
       {/* ✅ Form */}
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-7xl ">
         {stateType === "Domestic" && (
           <>
             <div>
@@ -125,7 +125,7 @@ const CreateState = () => {
                 name="countryName"
                 value="India"
                 readOnly
-                className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 focus:outline-none"
+                className="w-full  border border-gray-300 rounded-md p-2 bg-gray-100 focus:outline-none"
               />
             </div>
 

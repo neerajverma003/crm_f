@@ -75,7 +75,7 @@ const AddAdmin = () => {
 
 
   return (
-    <div className="max-w-3xl mx-auto mt-12 p-8 bg-white rounded-lg shadow-md">
+    <div className="max-w-7xl mx-auto mt-1 p-8 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold text-center mb-6">Add New Admin</h2>
       <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
@@ -187,7 +187,7 @@ const AddAdmin = () => {
           <button
             type="button"
             onClick={toggleShowPassword}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-blue-600 font-medium"
+            className="absolute right-3 top-12 -translate-y-1/2 text-blue-600 font-medium"
           >
             {formData.showPassword ? "Hide" : "Show"}
           </button>

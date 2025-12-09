@@ -132,14 +132,14 @@ const CreateDestination = () => {
       : destinations.filter((d) => d.type === filterType);
 
   return (
-    <div className="max-w-5xl mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold mb-6 text-center">
+    <div className="max-w-7xl mx-auto mt-1 bg-white p-8 rounded-lg shadow-md">
+      <h2 className="text-2xl font-semibold mb-6 text-left">
         Create Destination
       </h2>
 
       {/* Type */}
-      <div className="flex gap-6 mb-6 justify-center">
-        <label className="flex items-center gap-2">
+      <div className="flex gap-6 mb-6 justify-left">
+        <label className="flex items-left gap-2">
           <input
             type="checkbox"
             checked={destinationType === "Domestic"}
@@ -148,7 +148,7 @@ const CreateDestination = () => {
           Domestic
         </label>
 
-        <label className="flex items-center gap-2">
+        <label className="flex items-left gap-2">
           <input
             type="checkbox"
             checked={destinationType === "International"}
@@ -159,7 +159,7 @@ const CreateDestination = () => {
       </div>
 
       {/* FORM */}
-      <form onSubmit={handleSubmit} className="space-y-4 max-w-lg mx-auto">
+      <form onSubmit={handleSubmit} className="space-y-4 max-w-7xl ">
 
         {/* ========== COUNTRY ========== */}
         <div>
@@ -172,14 +172,14 @@ const CreateDestination = () => {
               type="text"
               value="India"
               readOnly
-              className="w-full border p-2 bg-gray-100"
+              className="w-full  border border-gray-300 rounded-md p-2 bg-gray-100 focus:outline-none"
             />
           ) : (
             <select
               name="countryName"
               value={formData.countryName}
               onChange={handleInputChange}
-              className="w-full border p-2"
+              className="w-full  border border-gray-300 rounded-md p-2 bg-gray-100 focus:outline-none"
             >
               <option value="">Select Country</option>
 
@@ -200,7 +200,7 @@ const CreateDestination = () => {
             name="state"
             value={formData.state}
             onChange={handleInputChange}
-            className="w-full border p-2"
+            className="w-full border border-gray-300 rounded-md p-2 bg-gray-100 focus:outline-none"
           >
             <option value="">Select State</option>
 
@@ -228,32 +228,33 @@ const CreateDestination = () => {
             name="destinationName"
             value={formData.destinationName}
             onChange={handleInputChange}
-            className="w-full border p-2"
+            className="w-full  border border-gray-300 rounded-md p-2 bg-gray-100 focus:outline-none"
             placeholder="Enter destination"
           />
         </div>
 
-        <button className="w-full bg-black text-white py-2 rounded-md">
+        <button className="w-full bg-black text-white py-2 rounded-md mt-5">
           Save Destination
         </button>
       </form>
 
       {/* TABLE */}
-      <div className="mt-10">
-        <h3 className="text-lg font-semibold mb-4">Destination List</h3>
+      <div className="mt-8">
+        <div className="flex items-center mb-1">
+          <h3 className="text-lg font-semibold flex justify-between items-center mb-4">Destination List</h3>
 
-        <div className="flex gap-3 mb-4">
-          {["All", "Domestic", "International"].map((type) => (
-            <button
-              key={type}
-              onClick={() => setFilterType(type)}
-              className={`px-4 py-1 border rounded ${
-                filterType === type ? "bg-black text-white" : ""
-              }`}
-            >
-              {type}
-            </button>
-          ))}
+          <div className="flex gap-3 py-1 mb-4 ml-auto">
+            {["All", "Domestic", "International"].map((type) => (
+              <button
+                key={type}
+                onClick={() => setFilterType(type)}
+                className={`px-4 py-1 border rounded ${
+                  filterType === type ? "bg-black text-white" : ""
+                }`}>
+                {type}
+              </button>
+            ))}
+          </div>
         </div>
 
         <table className="w-full border text-sm">

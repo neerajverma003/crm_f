@@ -261,6 +261,7 @@ const MainAttendance = () => {
   const [role, setRole] = useState("");
   const [loadingClock, setLoadingClock] = useState(false);
   const [todayRecord, setTodayRecord] = useState(null);
+  const [searchText, setSearchText] = useState("");
 
   const today = new Date();
   const formattedDate = today.toLocaleDateString("en-US");
@@ -460,7 +461,7 @@ const MainAttendance = () => {
       {role === "admin" && (
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-0">
-            <SearchEmployes />
+            <SearchEmployes setSearchText={setSearchText} />
             <div className="flex items-center gap-2 text-gray-700">
               <CalendarIcon size={20} className="text-gray-500" />
               <span className="text-sm">{formattedDate}</span>
@@ -469,7 +470,7 @@ const MainAttendance = () => {
         </div>
       )}
       <div className="w-full">
-            <EmployeeTable />
+            <EmployeeTable searchText={searchText} />
           </div>
     </div>
   );
