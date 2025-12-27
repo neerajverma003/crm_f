@@ -1219,6 +1219,7 @@
 
 
 import React, { useState } from "react";
+import * as XLSX from "xlsx";
 import { Plus, AlertCircle, UploadCloud } from "lucide-react";
 import Modal from "../UserManagement/Modal.jsx";
 
@@ -1281,6 +1282,11 @@ const AddLead = ({ onLeadAdded }) => {
   const [uploadError, setUploadError] = useState("");
   const [uploadSuccess, setUploadSuccess] = useState("");
   const [file, setFile] = useState(null);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [processedCount, setProcessedCount] = useState(0);
+  const [insertedCount, setInsertedCount] = useState(0);
+  const [skippedCount, setSkippedCount] = useState(0);
+  const [uploadErrorsList, setUploadErrorsList] = useState([]);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -1397,36 +1403,130 @@ const AddLead = ({ onLeadAdded }) => {
     setUploadSuccess("");
   };
 
+  const mapRowToPayload = (row) => {
+    const normalizeKey = (k) => k?.toString().trim().toLowerCase().replace(/\s+/g, "");
+    const getField = (obj, keys) => {
+      for (const k of keys) {
+        if (obj[k] !== undefined && obj[k] !== null && obj[k] !== "") return obj[k];
+      }
+      return undefined;
+    };
+
+    // Normalize keys to lower-case compact form
+    const normalized = {};
+    Object.keys(row || {}).forEach((key) => {
+      normalized[normalizeKey(key)] = row[key];
+    });
+
+    const phoneVal = getField(normalized, [
+      "phone",
+      "phoneno",
+      "contact",
+      "contactnumber",
+      "mobile",
+      "mobileno",
+      "whatsapp",
+      "whatsappno",
+    ]);
+
+    return {
+      phone: phoneVal ? String(phoneVal) : "",
+      name: getField(normalized, ["name"]) || "",
+      departureCity: getField(normalized, ["departurecity"]) || "",
+      email: getField(normalized, ["email"]) || "",
+      whatsAppNo: getField(normalized, ["whatsappno", "whatsapp"]) || "",
+      destination: getField(normalized, ["destination"]) || "",
+      expectedTravelDate: getField(normalized, ["expectedtraveldate"]) || null,
+      noOfDays: getField(normalized, ["noofdays"]) || null,
+      placesToCover: getField(normalized, ["placestocover"]) || "",
+      noOfPerson: getField(normalized, ["noofperson"]) || null,
+      noOfChild: getField(normalized, ["noofchild"]) || null,
+      childAges: getField(normalized, ["childages", "childage"]) ? [].concat(getField(normalized, ["childages", "childage"])) : [],
+      leadSource: getField(normalized, ["leadsource"]) || "",
+      leadType: getField(normalized, ["leadtype"]) || "",
+      tripType: getField(normalized, ["triptype"]) || "",
+      company: getField(normalized, ["company"]) || "",
+      leadStatus: getField(normalized, ["leadstatus"]) || "Hot",
+      value: getField(normalized, ["value"]) || null,
+      groupNumber: getField(normalized, ["groupnumber"]) || "",
+      lastContact: getField(normalized, ["lastcontact"]) || null,
+      notes: getField(normalized, ["notes"]) || "",
+    };
+  };
+
+  // Client-side upload: parse excel and send rows one-by-one with realtime counters
   const handleFileUpload = async () => {
     if (!file) {
       setUploadError("Please select a file to upload.");
       return;
     }
+
     setUploadError("");
     setUploadSuccess("");
     setIsSubmitting(true);
+    setTotalRecords(0);
+    setProcessedCount(0);
+    setInsertedCount(0);
+    setSkippedCount(0);
+    setUploadErrorsList([]);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(sheet);
 
-      const res = await fetch("http://localhost:4000/leads/upload", {
-        method: "POST",
-        body: formData,
-      });
+      setTotalRecords(rows.length);
 
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Upload failed");
+      let localInserted = 0;
+      let localSkipped = 0;
+
+      for (let i = 0; i < rows.length; i++) {
+        const rawRow = rows[i];
+        const payload = mapRowToPayload(rawRow);
+
+        // basic required field check (phone)
+        if (!payload.phone) {
+          localSkipped++;
+          setSkippedCount(localSkipped);
+          setUploadErrorsList((arr) => [...arr, `Row ${i + 2}: Missing phone`]);
+          setProcessedCount((p) => p + 1);
+          continue;
+        }
+
+        try {
+          const res = await fetch("http://localhost:4000/leads/lead", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          if (res.ok) {
+            localInserted++;
+            setInsertedCount(localInserted);
+          } else {
+            const errJson = await res.json().catch(() => ({}));
+            localSkipped++;
+            setSkippedCount(localSkipped);
+            setUploadErrorsList((arr) => [...arr, `Row ${i + 2}: ${errJson.message || 'Server error'}`]);
+          }
+        } catch (err) {
+          localSkipped++;
+          setSkippedCount(localSkipped);
+          setUploadErrorsList((arr) => [...arr, `Row ${i + 2}: ${err.message}`]);
+        } finally {
+          setProcessedCount((p) => p + 1);
+        }
       }
 
-      const result = await res.json();
-      setUploadSuccess(`Successfully uploaded ${result.insertedCount || "some"} leads.`);
+      setUploadSuccess(`Upload finished: ${localInserted} inserted, ${localSkipped} skipped.`);
       onLeadAdded?.();
       setFile(null);
-      document.getElementById("file-upload-input").value = "";
+      const el = document.getElementById("file-upload-input");
+      if (el) el.value = "";
     } catch (err) {
-      setUploadError(err.message);
+      setUploadError(err.message || "Upload failed");
     } finally {
       setIsSubmitting(false);
     }
@@ -1538,11 +1638,36 @@ const AddLead = ({ onLeadAdded }) => {
                     <AlertCircle className="w-5 h-5" /> {uploadError}
                   </p>
                 )}
-
                 {uploadSuccess && (
                   <p className="text-green-600 flex items-center gap-2">
                     <UploadCloud className="w-5 h-5" /> {uploadSuccess}
                   </p>
+                )}
+
+                {/* Realtime progress */}
+                {(isSubmitting || totalRecords > 0) && (
+                  <div className="mt-3 w-full">
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div
+                        className="bg-blue-600 h-3 rounded-full transition-all"
+                        style={{ width: `${totalRecords ? Math.round((processedCount / totalRecords) * 100) : 0}%` }}
+                      />
+                    </div>
+                    <div className="text-sm text-gray-700 mt-2">
+                      Processed: {processedCount}/{totalRecords} • Inserted: {insertedCount} • Skipped: {skippedCount}
+                    </div>
+                    {uploadErrorsList.length > 0 && (
+                      <div className="mt-2 text-xs text-red-600 max-h-32 overflow-auto border p-2 rounded bg-red-50">
+                        <strong>Errors:</strong>
+                        <ul className="list-disc ml-5">
+                          {uploadErrorsList.slice(0, 20).map((err, idx) => (
+                            <li key={idx}>{err}</li>
+                          ))}
+                          {uploadErrorsList.length > 20 && <li>and {uploadErrorsList.length - 20} more...</li>}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 <button

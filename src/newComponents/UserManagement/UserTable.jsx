@@ -1,15 +1,17 @@
 import { useState, useEffect } from "react";
 import { Eye, Edit2, Trash2, X } from "lucide-react";
 import EditUser from "./EditUser";
+import EditAdmin from "./EditAdmin";
 
 const API_URL = "http://localhost:4000";
 
-const UserTable = () => {
+const UserTable = ({ onlyAdmins = false }) => {
   const [users, setUsers] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isAdminEditOpen, setIsAdminEditOpen] = useState(false);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [viewingUser, setViewingUser] = useState(null);
@@ -33,7 +35,13 @@ const UserTable = () => {
       const role = localStorage.getItem("role");
       let combined = [];
 
-      if (role === "superAdmin") {
+      if (onlyAdmins) {
+        const adminRes = await fetch(`${API_URL}/getAdmins`);
+        const adminData = await adminRes.json();
+        if (!adminRes.ok) throw new Error(adminData.message || "Failed to fetch admins");
+        // adminData may be an array or an object
+        combined = adminData.admins || adminData || [];
+      } else if (role === "superAdmin") {
         const [adminRes, employeeRes] = await Promise.all([
           fetch(`${API_URL}/getAdmins`),
           fetch(`${API_URL}/employee/allEmployee`),
@@ -145,7 +153,8 @@ const UserTable = () => {
       return;
     }
     setEditingUser(user);
-    setIsEditModalOpen(true);
+    if (user.role === "Admin") setIsAdminEditOpen(true);
+    else setIsEditModalOpen(true);
   };
 
   // View
@@ -372,6 +381,15 @@ const UserTable = () => {
           isOpen={isEditModalOpen}
           onClose={handleCloseEditModal}
           onSave={handleSaveUser}
+        />
+      )}
+
+      {isAdminEditOpen && editingUser && (
+        <EditAdmin
+          user={editingUser}
+          isOpen={isAdminEditOpen}
+          onClose={() => { setIsAdminEditOpen(false); setEditingUser(null); }}
+          onSave={(updated) => { setIsAdminEditOpen(false); setEditingUser(null); handleSaveUser(updated); }}
         />
       )}
     </>

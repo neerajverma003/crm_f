@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
+import UserTable from "./UserTable";
 
 const AddAdmin = () => {
   const [formData, setFormData] = useState({
@@ -74,10 +75,31 @@ const AddAdmin = () => {
 };
 
 
+  const [activeTab, setActiveTab] = useState("form");
+
   return (
     <div className="max-w-7xl mx-auto mt-1 p-8 bg-white rounded-lg shadow-md">
       <h2 className="text-2xl font-semibold text-center mb-6">Add New Admin</h2>
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div className="flex items-center justify-end gap-3 mb-4">
+        <button
+          type="button"
+          onClick={() => setActiveTab("form")}
+          className={`px-4 py-2 rounded-md font-medium ${activeTab === "form" ? "bg-black text-white" : "bg-gray-100 text-gray-700"}`}
+        >
+          Add Admin
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("all")}
+          className={`px-4 py-2 rounded-md font-medium ${activeTab === "all" ? "bg-black text-white" : "bg-gray-100 text-gray-700"}`}
+        >
+          All Admins
+        </button>
+      </div>
+
+      {activeTab === "form" ? (
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
 
         {/* Full Name */}
         <div className="flex flex-col">
@@ -217,7 +239,14 @@ const AddAdmin = () => {
             {isSubmitting ? "Adding..." : "Add Admin"}
           </button>
         </div>
-      </form>
+        </form>
+      ) : (
+        <div className="bg-white border rounded-md shadow-sm p-4">
+          <h3 className="font-semibold mb-3">All Admins</h3>
+          <UserTable onlyAdmins={true} />
+        </div>
+      )}
+
     </div>
   );
 };

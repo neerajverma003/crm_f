@@ -6,6 +6,9 @@ const AddRole = () => {
   const [roles, setRoles] = useState([]);
   const [loading, setLoading] = useState(false);
   const [expandedRow, setExpandedRow] = useState(null);
+  const [editingId, setEditingId] = useState(null);
+  const [editRole, setEditRole] = useState("");
+  const [editSubroles, setEditSubroles] = useState([]);
 
   // ✅ Fetch all roles
   const fetchRoles = async () => {
@@ -96,6 +99,111 @@ const AddRole = () => {
 
   const toggleExpand = (index) =>
     setExpandedRow(expandedRow === index ? null : index);
+
+  // ✅ Delete Role
+  const handleDeleteRole = async (roleId) => {
+    if (window.confirm("Are you sure you want to delete this role?")) {
+      try {
+        const res = await fetch(`http://localhost:4000/role/deleterole/${roleId}`, {
+          method: "DELETE",
+        });
+
+        if (res.ok) {
+          alert("Role deleted successfully ✅");
+          fetchRoles();
+        } else {
+          alert("Failed to delete role ❌");
+        }
+      } catch (error) {
+        console.error("Delete Role Error:", error);
+        alert("Something went wrong!");
+      }
+    }
+  };
+
+  // ✅ Start Edit
+  const handleEditStart = (r) => {
+    setEditingId(r._id);
+    setEditRole(r.role);
+    setEditSubroles(r.subRole || []);
+  };
+
+  // ✅ Update Role
+  const handleUpdateRole = async () => {
+    if (!editRole.trim()) return alert("Please enter a role name.");
+
+    try {
+      // Clean and format subroles similar to add flow
+      const formattedSubRoles = (editSubroles || [])
+        .filter((s) => (s.subRoleName || "").trim() !== "")
+        .map((s) => ({
+          subRoleName: (s.subRoleName || "").trim(),
+          points: (s.points || []).filter((p) => (p || "").trim() !== ""),
+        }));
+
+      const res = await fetch(`http://localhost:4000/role/updaterole/${editingId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: editRole.trim(), subRole: formattedSubRoles }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok) {
+        alert("Role updated successfully ✅");
+        setEditingId(null);
+        setEditRole("");
+        setEditSubroles([]);
+        fetchRoles();
+      } else {
+        console.error("Update Role failed:", data);
+        alert(data.message || "Failed to update role ❌");
+      }
+    } catch (error) {
+      console.error("Update Role Error:", error);
+      alert("Something went wrong!");
+    }
+  };
+
+  // ✅ Edit Mode - Subrole handlers
+  const handleEditSubroleChange = (index, value) => {
+    const updated = [...editSubroles];
+    updated[index].subRoleName = value;
+    setEditSubroles(updated);
+  };
+
+  const handleEditPointChange = (subIndex, pointIndex, value) => {
+    const updated = [...editSubroles];
+    updated[subIndex].points[pointIndex] = value;
+    setEditSubroles(updated);
+  };
+
+  const addEditSubroleField = () =>
+    setEditSubroles([...editSubroles, { subRoleName: "", points: [""] }]);
+
+  const removeEditSubroleField = (index) =>
+    setEditSubroles(editSubroles.filter((_, i) => i !== index));
+
+  const addEditPointField = (subIndex) => {
+    const updated = [...editSubroles];
+    updated[subIndex].points.push("");
+    setEditSubroles(updated);
+  };
+
+  const removeEditPointField = (subIndex, pointIndex) => {
+    const updated = [...editSubroles];
+    updated[subIndex].points = updated[subIndex].points.filter(
+      (_, i) => i !== pointIndex
+    );
+    setEditSubroles(updated);
+  };
+
+  // ✅ Cancel Edit
+  const handleEditCancel = () => {
+    setEditingId(null);
+    setEditRole("");
+    setEditSubroles([]);
+  };
 
   return (
     <div className="max-w-3xl mx-auto mt-12 p-8 bg-white rounded-lg shadow-md">
@@ -218,6 +326,9 @@ const AddRole = () => {
               <th className="border border-gray-200 px-4 py-2 text-left">
                 Points
               </th>
+              <th className="border border-gray-200 px-4 py-2 text-left">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -232,7 +343,16 @@ const AddRole = () => {
                       {index + 1}
                     </td>
                     <td className="border border-gray-200 px-4 py-2">
-                      {r.role}
+                      {editingId === r._id ? (
+                        <input
+                          type="text"
+                          value={editRole}
+                          onChange={(e) => setEditRole(e.target.value)}
+                          className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black"
+                        />
+                      ) : (
+                        r.role
+                      )}
                     </td>
                     <td className="border border-gray-200 px-4 py-2">
                       {r.subRole?.length || 0} subroles
@@ -244,14 +364,73 @@ const AddRole = () => {
                       )}{" "}
                       points
                     </td>
+                    <td className="border border-gray-200 px-4 py-2">
+                      <div className="flex gap-2">
+                        {editingId === r._id ? (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleUpdateRole();
+                              }}
+                              className="px-3 py-1 bg-green-600 text-white rounded-md hover:bg-green-700 text-xs font-medium"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditCancel();
+                              }}
+                              className="px-3 py-1 bg-gray-500 text-white rounded-md hover:bg-gray-600 text-xs font-medium"
+                            >
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleExpand(index);
+                              }}
+                              className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 text-xs font-medium"
+                              title="View Details"
+                            >
+                              View
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleEditStart(r);
+                              }}
+                              className="px-3 py-1 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 text-xs font-medium"
+                              title="Edit Role"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteRole(r._id);
+                              }}
+                              className="px-3 py-1 bg-red-600 text-white rounded-md hover:bg-red-700 text-xs font-medium"
+                              title="Delete Role"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </td>
                   </tr>
 
-                  {/* Expanded Details */}
-                  {expandedRow === index && (
+                  {/* Expanded Details or Edit Mode */}
+                  {expandedRow === index && editingId !== r._id && (
                     <tr>
                       <td></td>
                       <td
-                        colSpan="3"
+                        colSpan="4"
                         className="border border-gray-200 px-4 py-3 bg-gray-50"
                       >
                         {Array.isArray(r.subRole) && r.subRole.length > 0 ? (
@@ -277,12 +456,108 @@ const AddRole = () => {
                       </td>
                     </tr>
                   )}
+
+                  {/* Edit Mode - Editable Subroles and Points */}
+                  {editingId === r._id && (
+                    <tr>
+                      <td></td>
+                      <td
+                        colSpan="4"
+                        className="border border-gray-200 px-4 py-3 bg-blue-50"
+                      >
+                        <div className="flex flex-col gap-3">
+                          <label className="font-medium text-gray-700">Edit Subroles</label>
+
+                          {editSubroles.map((sub, subIndex) => (
+                            <div
+                              key={subIndex}
+                              className="border border-gray-200 p-3 rounded-lg bg-white"
+                            >
+                              <div className="flex items-center gap-2 mb-2">
+                                <input
+                                  type="text"
+                                  placeholder={`Subrole ${subIndex + 1}`}
+                                  value={sub.subRoleName || ""}
+                                  onChange={(e) =>
+                                    handleEditSubroleChange(subIndex, e.target.value)
+                                  }
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                {editSubroles.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      removeEditSubroleField(subIndex)
+                                    }
+                                    className="text-red-500 hover:text-red-700 font-bold text-lg"
+                                  >
+                                    ✕
+                                  </button>
+                                )}
+                              </div>
+
+                              {/* Edit Points */}
+                              <div className="ml-3">
+                                <label className="text-sm text-gray-600">Points</label>
+                                {sub.points?.map((point, pointIndex) => (
+                                  <div
+                                    key={pointIndex}
+                                    className="flex items-center gap-2 mt-2"
+                                  >
+                                    <input
+                                      type="text"
+                                      placeholder={`Point ${pointIndex + 1}`}
+                                      value={point || ""}
+                                      onChange={(e) =>
+                                        handleEditPointChange(
+                                          subIndex,
+                                          pointIndex,
+                                          e.target.value
+                                        )
+                                      }
+                                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    {sub.points.length > 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          removeEditPointField(subIndex, pointIndex)
+                                        }
+                                        className="text-red-500 hover:text-red-700 font-bold text-lg"
+                                      >
+                                        ✕
+                                      </button>
+                                    )}
+                                  </div>
+                                ))}
+                                <button
+                                  type="button"
+                                  onClick={() => addEditPointField(subIndex)}
+                                  className="mt-2 text-sm text-blue-600 font-medium hover:underline"
+                                >
+                                  + Add Point
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+
+                          <button
+                            type="button"
+                            onClick={addEditSubroleField}
+                            className="text-sm text-blue-600 font-medium hover:underline self-start"
+                          >
+                            + Add Subrole
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </React.Fragment>
               ))
             ) : (
               <tr>
                 <td
-                  colSpan="4"
+                  colSpan="5"
                   className="text-center text-gray-500 py-4 border border-gray-200"
                 >
                   No roles found.

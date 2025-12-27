@@ -31,7 +31,9 @@ const Department = () => {
       const response = await fetch("http://localhost:4000/department/department");
       const result = await response.json();
 
-      const mappedData = result.map(dep => {
+      const departmentsArray = result.departments || result;
+
+      const mappedData = departmentsArray.map(dep => {
         const companyObj = companies.find(c => c._id === dep.company);
         return {
           ...dep,
@@ -83,12 +85,10 @@ const Department = () => {
 
       if (!response.ok) throw new Error("Failed to add department");
 
-      const savedData = await response.json();
-      const companyObj = companies.find(c => c._id === formData.companyId);
-      const newEntry = { ...savedData, companyName: companyObj?.companyName };
-
-      setEntries([newEntry, ...entries]);
+      // Refresh the table to show the new department
+      await getTable();
       setFormData({ dep: '', companyId: '' });
+      alert("Department added successfully!");
     } catch (error) {
       console.error(error);
       alert("Failed to add department");

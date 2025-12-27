@@ -1309,14 +1309,41 @@ function EmployeeSidebar() {
 
           for (const roleItem of data.assignedRoles) {
             if (roleItem.subRoles && roleItem.subRoles.length > 0) {
-              for (const subId of roleItem.subRoles) {
-                const name = await fetchSubRoleName(subId);
-                allSubRoles.push({ _id: subId, subRoleName: name });
+              for (const sub of roleItem.subRoles) {
+                // `sub` may be a string id or an object { _id, name | subRoleName }
+                if (!sub) continue;
+                if (typeof sub === "string") {
+                  const name = await fetchSubRoleName(sub);
+                  allSubRoles.push({ _id: sub, subRoleName: name });
+                } else if (typeof sub === "object") {
+                  const id = sub._id || sub.id || sub.subRoleId || "";
+                  const name = sub.name || sub.subRoleName || (id ? await fetchSubRoleName(id) : id);
+                  allSubRoles.push({ _id: id, subRoleName: name });
+                } else {
+                  const sid = String(sub);
+                  const name = await fetchSubRoleName(sid);
+                  allSubRoles.push({ _id: sid, subRoleName: name });
+                }
               }
             }
           }
 
-          setRoles(allSubRoles);
+          // Ensure any items still missing a readable name are resolved
+          const resolved = await Promise.all(
+            allSubRoles.map(async (item) => {
+              if (!item.subRoleName || item.subRoleName === item._id) {
+                try {
+                  const name = await fetchSubRoleName(item._id);
+                  return { ...item, subRoleName: name };
+                } catch (e) {
+                  return item;
+                }
+              }
+              return item;
+            })
+          );
+
+          setRoles(resolved);
         } else {
           setRoles([]);
         }
@@ -1336,7 +1363,9 @@ function EmployeeSidebar() {
   const getSubRoleRoute = (name) => {
     if (!name) return "/";
 
-    const normalized = name.toLowerCase();
+    // Accept either a string or an object (e.g. { subRoleName, name })
+    const text = typeof name === "string" ? name : (name?.subRoleName || name?.name || String(name));
+    const normalized = String(text).toLowerCase();
 
     // B2B routes
     if (normalized === "create destination") return "/b2b-destination";
@@ -1417,15 +1446,17 @@ function EmployeeSidebar() {
               roles.map((sub) => {
                 const route = getSubRoleRoute(sub.subRoleName);
                 const active = location.pathname === route;
+                const label = sub?.subRoleName || sub?.name || sub?.roleName || sub?._id || String(sub);
+                const key = sub?._id || label;
                 return (
                   <Link
-                    key={sub._id}
-                    to={route}
+                    key={key}
+                    to={getSubRoleRoute(label)}
                     className={`block px-4 py-2 rounded-lg font-medium ${
                       active ? "bg-black text-white" : "hover:bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {sub.subRoleName}
+                    {label}
                   </Link>
                 );
               })

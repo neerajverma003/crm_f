@@ -1,760 +1,3 @@
-// // import React, { useState, useEffect } from "react";
-// // import { Plus, AlertCircle, Eye, Edit2, X } from "lucide-react";
-
-// // // 🧩 Dropdown Options
-// // const leadSources = [
-// //   "Cold Call", "Website", "Referral", "LinkedIn", "Trade Show",
-// //   "Email Campaign", "Social Media", "Event", "Organic Search", "Paid Ads",
-// // ];
-// // const leadTypes = ["International", "Domestic"];
-// // const tripTypes = ["Solo", "Group", "Family", "Couple", "Honeymoon"];
-// // const leadStatuses = ["Hot", "Warm", "Cold", "Converted", "Lost"];
-// // const tripDurations = [
-// //   "1n/2d","2n/3d","3n/4d","4n/5d","5n/6d","6n/7d","7n/8d","8n/9d","9n/10d",
-// //   "10n/11d","11n/12d","12n/13d","13n/14d","14n/15d","Others"
-// // ];
-
-// // // 🧩 Input Field Component
-// // const InputField = ({ name, type = "text", placeholder, required, value, error, onChange }) => (
-// //   <div className="h-[4.5rem]">
-// //     <label className="block text-xs font-medium text-gray-700 mb-0.5">
-// //       {name.charAt(0).toUpperCase() + name.slice(1)} {required && <span className="text-red-500">*</span>}
-// //     </label>
-// //     <input
-// //       type={type}
-// //       name={name}
-// //       value={value || ""}
-// //       onChange={onChange}
-// //       placeholder={placeholder}
-// //       className={`w-full px-3 py-1.5 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-// //         error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
-// //       }`}
-// //       autoComplete="off"
-// //     />
-// //     {error && (
-// //       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-// //         <AlertCircle className="w-3 h-3" /> {error}
-// //       </p>
-// //     )}
-// //   </div>
-// // );
-
-// // // 🧩 Select Field Component
-// // const SelectField = ({ name, options, required, value, error, onChange }) => (
-// //   <div className="h-[4.5rem]">
-// //     <label className="block text-xs font-medium text-gray-700 mb-0.5">
-// //       {name.charAt(0).toUpperCase() + name.slice(1)} {required && <span className="text-red-500">*</span>}
-// //     </label>
-// //     <select
-// //       name={name}
-// //       value={value || ""}
-// //       onChange={onChange}
-// //       className={`w-full px-3 py-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-// //         error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
-// //       }`}
-// //     >
-// //       <option value="">Select {name}</option>
-// //       {options.map((opt) => (
-// //         <option key={opt}>{opt}</option>
-// //       ))}
-// //     </select>
-// //     {error && (
-// //       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-// //         <AlertCircle className="w-3 h-3" /> {error}
-// //       </p>
-// //     )}
-// //   </div>
-// // );
-
-// // // 🧩 Modal Component
-// // const Modal = ({ isOpen, onClose, size = "large", children }) => {
-// //   if (!isOpen) return null;
-// //   return (
-// //     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
-// //       <div 
-// //         className={`bg-white rounded-lg shadow-lg ${size === 'large' ? 'w-full max-w-4xl' : 'w-full max-w-md'} max-h-[95vh] overflow-hidden`}
-// //         onClick={(e) => e.stopPropagation()}
-// //       >
-// //         {children}
-// //       </div>
-// //     </div>
-// //   );
-// // };
-
-// // // 🧩 Add/Edit Lead Form Component
-// // const LeadForm = ({ initialData, onSubmit, onClose }) => {
-// //   const [formData, setFormData] = useState(initialData);
-// //   const [errors, setErrors] = useState({});
-// //   const [isSubmitting, setIsSubmitting] = useState(false);
-// //   const [apiError, setApiError] = useState("");
-// //   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-// //   useEffect(() => setFormData(initialData), [initialData]);
-
-// //   const validate = (data) => {
-// //     const newErrors = {};
-// //     if (!data.phone || data.phone.trim() === "")
-// //       newErrors.phone = "Phone is required";
-// //     return newErrors;
-// //   };
-
-// //   const handleChange = (e) => {
-// //     const { name, value } = e.target;
-// //     setFormData((prev) => ({ ...prev, [name]: value }));
-// //   };
-
-// //   // Handle dynamic child ages
-// //   const handleChildAgeChange = (index, value) => {
-// //     const ages = [...formData.childAges];
-// //     ages[index] = value;
-// //     setFormData((prev) => ({ ...prev, childAges: ages }));
-// //   };
-// //   const addChildAge = () => setFormData((prev) => ({ ...prev, childAges: [...prev.childAges, ""] }));
-// //   const removeChildAge = (index) => {
-// //     const ages = [...formData.childAges];
-// //     ages.splice(index, 1);
-// //     setFormData((prev) => ({ ...prev, childAges: ages }));
-// //   };
-
-// //   const handleSubmit = async (e) => {
-// //     e.preventDefault();
-// //     const newErrors = validate(formData);
-// //     setErrors(newErrors);
-// //     if (Object.keys(newErrors).length > 0) return;
-
-// //     setIsSubmitting(true);
-// //     setApiError("");
-// //     try {
-// //       await onSubmit(formData);
-// //       setSubmitSuccess(true);
-// //       setTimeout(() => { setSubmitSuccess(false); onClose(); }, 1500);
-// //     } catch (err) {
-// //       setApiError(err.message);
-// //     } finally {
-// //       setIsSubmitting(false);
-// //     }
-// //   };
-
-// //   return (
-// //     <form onSubmit={handleSubmit} className="space-y-3">
-// //       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-// //         <InputField name="name" value={formData.name} onChange={handleChange} />
-// //         <InputField name="email" type="email" value={formData.email} onChange={handleChange} />
-// //         <InputField name="phone" value={formData.phone} onChange={handleChange} required error={errors.phone} />
-// //         <InputField name="whatsAppNo" value={formData.whatsAppNo} onChange={handleChange} />
-// //         <InputField name="departureCity" value={formData.departureCity} onChange={handleChange} />
-// //         <InputField name="destination" value={formData.destination} onChange={handleChange} />
-// //         <InputField name="expectedTravelDate" type="date" value={formData.expectedTravelDate} onChange={handleChange} />
-
-// //         <SelectField name="noOfDays" options={tripDurations} value={formData.noOfDays} onChange={handleChange} />
-// //         {formData.noOfDays === "Others" && (
-// //           <InputField
-// //             name="customNoOfDays"
-// //             placeholder="Enter custom duration"
-// //             value={formData.customNoOfDays || ""}
-// //             onChange={handleChange}
-// //           />
-// //         )}
-
-// //         <InputField name="placesToCover" value={formData.placesToCover} onChange={handleChange} />
-// //         <InputField name="noOfPerson" type="number" value={formData.noOfPerson} onChange={handleChange} />
-// //         <InputField name="noOfChild" type="number" value={formData.noOfChild} onChange={handleChange} />
-// //         <InputField name="groupNumber" type="text" value={formData.groupNumber} onChange={handleChange} />
-
-// //         {/* Dynamic Child Ages */}
-// //         <div className="col-span-2">
-// //           <label className="block text-xs font-medium text-gray-700 mb-0.5">Child Ages</label>
-// //           {formData.childAges.map((age, idx) => (
-// //             <div key={idx} className="flex gap-2 mb-1">
-// //               <input
-// //                 type="number"
-// //                 value={age}
-// //                 onChange={(e) => handleChildAgeChange(idx, e.target.value)}
-// //                 placeholder="Child Age"
-// //                 className="w-full px-3 py-1.5 border rounded-lg text-sm"
-// //               />
-// //               <button type="button" onClick={() => removeChildAge(idx)} className="bg-red-100 px-2 rounded hover:bg-red-200">X</button>
-// //             </div>
-// //           ))}
-// //           <button type="button" onClick={addChildAge} className="mt-1 text-blue-600 hover:underline text-sm">
-// //             + Add Child Age
-// //           </button>
-// //         </div>
-
-// //         <SelectField name="leadSource" options={leadSources} value={formData.leadSource} onChange={handleChange} />
-// //         <SelectField name="leadType" options={leadTypes} value={formData.leadType} onChange={handleChange} />
-// //         <SelectField name="tripType" options={tripTypes} value={formData.tripType} onChange={handleChange} />
-// //         <SelectField name="leadStatus" options={leadStatuses} value={formData.leadStatus} onChange={handleChange} />
-// //       </div>
-
-// //       <div className="mt-2">
-// //         <label className="block text-xs font-medium text-gray-700 mb-0.5">Notes</label>
-// //         <textarea
-// //           name="notes"
-// //           value={formData.notes}
-// //           onChange={handleChange}
-// //           rows="3"
-// //           placeholder="Add any notes or remarks..."
-// //           className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-// //         ></textarea>
-// //       </div>
-
-// //       <div className="mt-3 flex gap-2">
-// //         <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-// //           {isSubmitting ? "Saving..." : "Save Lead"}
-// //         </button>
-// //         <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded">
-// //           Cancel
-// //         </button>
-// //       </div>
-
-// //       {apiError && <p className="text-red-600 mt-2">{apiError}</p>}
-// //       {submitSuccess && <p className="text-green-600 mt-2">Lead saved successfully!</p>}
-// //     </form>
-// //   );
-// // };
-
-// // // 🧩 Main Component
-// // const EmployeeLeads = () => {
-// //   const [leads, setLeads] = useState([]);
-// //   const [loading, setLoading] = useState(true);
-// //   const [error, setError] = useState("");
-// //   const [viewLead, setViewLead] = useState(null);
-// //   const [editLead, setEditLead] = useState(null);
-// //   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-// //   const employeeId = localStorage.getItem("userId");
-
-// //   const fetchLeads = async () => {
-// //     setLoading(true);
-// //     setError("");
-// //     if (!employeeId) { setError("Employee ID not found"); setLoading(false); return; }
-// //     try {
-// //       const res = await fetch(`http://localhost:4000/employeelead/employee/${employeeId}`);
-// //       if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-// //       const data = await res.json();
-// //       setLeads((data.leads || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-// //     } catch (err) {
-// //       setError(err.message || "Failed to fetch leads");
-// //     } finally { setLoading(false); }
-// //   };
-
-// //   useEffect(() => { fetchLeads(); }, []);
-
-// //   const handleView = (lead) => setViewLead(lead);
-// //   const handleEdit = (lead) => setEditLead(lead);
-// //   const closeModal = () => { setViewLead(null); setEditLead(null); setIsAddModalOpen(false); };
-
-// //   const handleAddLead = async (data) => {
-// //     const res = await fetch("http://localhost:4000/employeelead", {
-// //       method: "POST",
-// //       headers: { "Content-Type": "application/json" },
-// //       body: JSON.stringify({ ...data, employeeId }),
-// //     });
-// //     if (!res.ok) throw new Error("Failed to create lead");
-// //     await fetchLeads();
-// //   };
-
-// //   const handleUpdateLead = async (data) => {
-// //     if (!editLead) return;
-// //     const res = await fetch(`http://localhost:4000/employeelead/${editLead._id}`, {
-// //       method: "PUT",
-// //       headers: { "Content-Type": "application/json" },
-// //       body: JSON.stringify(data),
-// //     });
-// //     if (!res.ok) throw new Error("Failed to update lead");
-// //     await fetchLeads();
-// //   };
-
-// //   const formatDate = (dateString) => {
-// //     if (!dateString) return "-";
-// //     const date = new Date(dateString);
-// //     return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-// //   };
-
-// //   return (
-// //     <div className="p-4">
-// //       <button
-// //         onClick={() => setIsAddModalOpen(true)}
-// //         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
-// //       >
-// //         <Plus className="w-4 h-4" /> Add Lead
-// //       </button>
-
-// //       <div className="mt-6 overflow-x-auto">
-// //         {loading ? <p>Loading leads...</p> :
-// //          error || leads.length === 0 ? <p className="text-gray-600">Please Enter Leads</p> :
-// //          <table className="min-w-full border border-gray-300 rounded-lg">
-// //           <thead className="bg-gray-100">
-// //             <tr>
-// //               <th className="px-4 py-2 border">Name</th>
-// //               <th className="px-4 py-2 border">Email</th>
-// //               <th className="px-4 py-2 border">Phone</th>
-// //               <th className="px-4 py-2 border">Departure</th>
-// //               <th className="px-4 py-2 border">Destination</th>
-// //               <th className="px-4 py-2 border">Travel Date</th>
-// //               <th className="px-4 py-2 border text-center">Actions</th>
-// //             </tr>
-// //           </thead>
-// //           <tbody>
-// //             {leads.map((lead) => (
-// //               <tr key={lead._id} className="hover:bg-gray-50 transition-colors">
-// //                 <td className="px-4 py-2 border">{lead.name}</td>
-// //                 <td className="px-4 py-2 border">{lead.email}</td>
-// //                 <td className="px-4 py-2 border">{lead.phone}</td>
-// //                 <td className="px-4 py-2 border">{lead.departureCity}</td>
-// //                 <td className="px-4 py-2 border">{lead.destination}</td>
-// //                 <td className="px-4 py-2 border">{formatDate(lead.expectedTravelDate)}</td>
-// //                 <td className="px-4 py-2 border text-center">
-// //                   <div className="flex justify-center gap-2">
-// //                     <button onClick={() => handleView(lead)} className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="View Lead"><Eye size={16} /></button>
-// //                     <button onClick={() => handleEdit(lead)} className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="Edit Lead"><Edit2 size={16} /></button>
-// //                   </div>
-// //                 </td>
-// //               </tr>
-// //             ))}
-// //           </tbody>
-// //          </table>}
-// //       </div>
-
-// //       {/* Add/Edit Modal */}
-// //       {(isAddModalOpen || editLead) && (
-// //         <Modal isOpen={true} onClose={closeModal} size="large">
-// //           <div className="flex flex-col h-full max-h-[95vh]">
-// //             <div className="p-4 border-b flex justify-between items-center">
-// //               <h2 className="text-lg font-bold text-gray-900">
-// //                 {editLead ? "Edit Lead" : "Add New Lead"}
-// //               </h2>
-// //               <button onClick={closeModal} className="text-gray-600 hover:text-gray-800"><X size={20} /></button>
-// //             </div>
-// //             <div className="flex-1 overflow-y-auto p-4">
-// //               <LeadForm
-// //                 initialData={editLead || {
-// //                   name: "", email: "", phone: "", whatsAppNo: "",
-// //                   departureCity: "", destination: "", expectedTravelDate: "",
-// //                   noOfDays: "", customNoOfDays: "", placesToCover: "",
-// //                   noOfPerson: "", noOfChild: "", childAges: [],
-// //                   groupNumber: "", // ← Added
-// //                   leadSource: "", leadType: "", tripType: "",
-// //                   leadStatus: "Hot", notes: ""
-// //                 }}
-// //                 onSubmit={editLead ? handleUpdateLead : handleAddLead}
-// //                 onClose={closeModal}
-// //               />
-// //             </div>
-// //           </div>
-// //         </Modal>
-// //       )}
-
-// //       {/* View Lead Modal */}
-// //       {viewLead && (
-// //         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeModal}>
-// //           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
-// //             <button onClick={closeModal} className="absolute top-3 right-3 text-gray-600 hover:text-gray-800"><X size={18} /></button>
-// //             <h2 className="text-lg font-semibold mb-4 text-center">Lead Details</h2>
-// //             <div className="space-y-3">
-// //               <div><strong className="block text-gray-700">Name:</strong> {viewLead.name || "-"}</div>
-// //               <div><strong className="block text-gray-700">Email:</strong> {viewLead.email || "-"}</div>
-// //               <div><strong className="block text-gray-700">Phone:</strong> {viewLead.phone || "-"}</div>
-// //               <div><strong className="block text-gray-700">WhatsApp:</strong> {viewLead.whatsAppNo || "-"}</div>
-// //               <div><strong className="block text-gray-700">Departure:</strong> {viewLead.departureCity || "-"}</div>
-// //               <div><strong className="block text-gray-700">Destination:</strong> {viewLead.destination || "-"}</div>
-// //               <div><strong className="block text-gray-700">Travel Date:</strong> {formatDate(viewLead.expectedTravelDate)}</div>
-// //               <div><strong className="block text-gray-700">No. of Days:</strong> {viewLead.noOfDays || "-"} {viewLead.noOfDays === "Others" ? `(${viewLead.customNoOfDays})` : ""}</div>
-// //               <div><strong className="block text-gray-700">Places to Cover:</strong> {viewLead.placesToCover || "-"}</div>
-// //               <div><strong className="block text-gray-700">No. of Persons:</strong> {viewLead.noOfPerson || "-"}</div>
-// //               <div><strong className="block text-gray-700">No. of Children:</strong> {viewLead.noOfChild || "-"}</div>
-// //               <div><strong className="block text-gray-700">Child Ages:</strong> {viewLead.childAges?.length ? viewLead.childAges.join(", ") : "-"}</div>
-// //               <div><strong className="block text-gray-700">Group Number:</strong> {viewLead.groupNumber || "-"}</div>
-// //               <div><strong className="block text-gray-700">Lead Source:</strong> {viewLead.leadSource || "-"}</div>
-// //               <div><strong className="block text-gray-700">Lead Type:</strong> {viewLead.leadType || "-"}</div>
-// //               <div><strong className="block text-gray-700">Trip Type:</strong> {viewLead.tripType || "-"}</div>
-// //               <div><strong className="block text-gray-700">Lead Status:</strong> {viewLead.leadStatus || "-"}</div>
-// //               <div><strong className="block text-gray-700">Notes:</strong> {viewLead.notes || "-"}</div>
-// //             </div>
-// //           </div>
-// //         </div>
-// //       )}
-// //     </div>
-// //   );
-// // };
-
-// // export default EmployeeLeads;
-
-
-
-
-// import React, { useState, useEffect } from "react";
-// import { Plus, AlertCircle, Eye, Edit2, X } from "lucide-react";
-
-// // 🧩 Dropdown Options
-// const leadSources = [
-//   "Cold Call", "Website", "Referral", "LinkedIn", "Trade Show",
-//   "Email Campaign", "Social Media", "Event", "Organic Search", "Paid Ads",
-// ];
-// const leadTypes = ["International", "Domestic"];
-// const tripTypes = ["Solo", "Group", "Family", "Couple", "Honeymoon"];
-// const leadStatuses = ["Hot", "Warm", "Cold", "Converted", "Lost"];
-// const tripDurations = [
-//   "1n/2d","2n/3d","3n/4d","4n/5d","5n/6d","6n/7d","7n/8d","8n/9d","9n/10d",
-//   "10n/11d","11n/12d","12n/13d","13n/14d","14n/15d","Others"
-// ];
-
-// // 🧩 Input Field Component
-// const InputField = ({ name, type = "text", placeholder, required, value, error, onChange }) => (
-//   <div className="h-[4.5rem]">
-//     <label className="block text-xs font-medium text-gray-700 mb-0.5">
-//       {name.charAt(0).toUpperCase() + name.slice(1)} {required && <span className="text-red-500">*</span>}
-//     </label>
-//     <input
-//       type={type}
-//       name={name}
-//       value={value || ""}
-//       onChange={onChange}
-//       placeholder={placeholder}
-//       className={`w-full px-3 py-1.5 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-//         error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
-//       }`}
-//       autoComplete="off"
-//     />
-//     {error && (
-//       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-//         <AlertCircle className="w-3 h-3" /> {error}
-//       </p>
-//     )}
-//   </div>
-// );
-
-// // 🧩 Select Field Component
-// const SelectField = ({ name, options, required, value, error, onChange }) => (
-//   <div className="h-[4.5rem]">
-//     <label className="block text-xs font-medium text-gray-700 mb-0.5">
-//       {name.charAt(0).toUpperCase() + name.slice(1)} {required && <span className="text-red-500">*</span>}
-//     </label>
-//     <select
-//       name={name}
-//       value={value || ""}
-//       onChange={onChange}
-//       className={`w-full px-3 py-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-//         error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
-//       }`}
-//     >
-//       <option value="">Select {name}</option>
-//       {options.map((opt) => (
-//         <option key={opt}>{opt}</option>
-//       ))}
-//     </select>
-//     {error && (
-//       <p className="text-xs text-red-600 mt-1 flex items-center gap-1">
-//         <AlertCircle className="w-3 h-3" /> {error}
-//       </p>
-//     )}
-//   </div>
-// );
-
-// // 🧩 Modal Component
-// const Modal = ({ isOpen, onClose, size = "large", children }) => {
-//   if (!isOpen) return null;
-//   return (
-//     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={onClose}>
-//       <div 
-//         className={`bg-white rounded-lg shadow-lg ${size === 'large' ? 'w-full max-w-4xl' : 'w-full max-w-md'} max-h-[95vh] overflow-hidden`}
-//         onClick={(e) => e.stopPropagation()}
-//       >
-//         {children}
-//       </div>
-//     </div>
-//   );
-// };
-
-// // 🧩 Add/Edit Lead Form Component
-// const LeadForm = ({ initialData, onSubmit, onClose }) => {
-//   const [formData, setFormData] = useState(initialData);
-//   const [errors, setErrors] = useState({});
-//   const [isSubmitting, setIsSubmitting] = useState(false);
-//   const [apiError, setApiError] = useState("");
-//   const [submitSuccess, setSubmitSuccess] = useState(false);
-
-//   useEffect(() => setFormData(initialData), [initialData]);
-
-//   const validate = (data) => {
-//     const newErrors = {};
-//     if (!data.phone || data.phone.trim() === "")
-//       newErrors.phone = "Phone is required";
-//     return newErrors;
-//   };
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({ ...prev, [name]: value }));
-//   };
-
-//   const handleChildAgeChange = (index, value) => {
-//     const ages = [...formData.childAges];
-//     ages[index] = value;
-//     setFormData((prev) => ({ ...prev, childAges: ages }));
-//   };
-//   const addChildAge = () => setFormData((prev) => ({ ...prev, childAges: [...prev.childAges, ""] }));
-//   const removeChildAge = (index) => {
-//     const ages = [...formData.childAges];
-//     ages.splice(index, 1);
-//     setFormData((prev) => ({ ...prev, childAges: ages }));
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     const newErrors = validate(formData);
-//     setErrors(newErrors);
-//     if (Object.keys(newErrors).length > 0) return;
-
-//     setIsSubmitting(true);
-//     setApiError("");
-//     try {
-//       await onSubmit(formData);
-//       setSubmitSuccess(true);
-//       setTimeout(() => { setSubmitSuccess(false); onClose(); }, 1500);
-//     } catch (err) {
-//       setApiError(err.message || "Failed to save lead");
-//     } finally {
-//       setIsSubmitting(false);
-//     }
-//   };
-
-//   return (
-//     <form onSubmit={handleSubmit} className="space-y-3">
-//       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-//         <InputField name="name" value={formData.name} onChange={handleChange} />
-//         <InputField name="email" type="email" value={formData.email} onChange={handleChange} />
-//         <InputField name="phone" value={formData.phone} onChange={handleChange} required error={errors.phone} />
-//         <InputField name="whatsAppNo" value={formData.whatsAppNo} onChange={handleChange} />
-//         <InputField name="departureCity" value={formData.departureCity} onChange={handleChange} />
-//         <InputField name="destination" value={formData.destination} onChange={handleChange} />
-//         <InputField name="expectedTravelDate" type="date" value={formData.expectedTravelDate} onChange={handleChange} />
-
-//         <SelectField name="noOfDays" options={tripDurations} value={formData.noOfDays} onChange={handleChange} />
-//         {formData.noOfDays === "Others" && (
-//           <InputField
-//             name="customNoOfDays"
-//             placeholder="Enter custom duration"
-//             value={formData.customNoOfDays || ""}
-//             onChange={handleChange}
-//           />
-//         )}
-
-//         <InputField name="placesToCover" value={formData.placesToCover} onChange={handleChange} />
-//         <InputField name="noOfPerson" type="number" value={formData.noOfPerson} onChange={handleChange} />
-//         <InputField name="noOfChild" type="number" value={formData.noOfChild} onChange={handleChange} />
-//         <InputField name="groupNumber" type="text" value={formData.groupNumber} onChange={handleChange} />
-
-//         {/* Dynamic Child Ages */}
-//         <div className="col-span-2">
-//           <label className="block text-xs font-medium text-gray-700 mb-0.5">Child Ages</label>
-//           {formData.childAges.map((age, idx) => (
-//             <div key={idx} className="flex gap-2 mb-1">
-//               <input
-//                 type="number"
-//                 value={age}
-//                 onChange={(e) => handleChildAgeChange(idx, e.target.value)}
-//                 placeholder="Child Age"
-//                 className="w-full px-3 py-1.5 border rounded-lg text-sm"
-//               />
-//               <button type="button" onClick={() => removeChildAge(idx)} className="bg-red-100 px-2 rounded hover:bg-red-200">X</button>
-//             </div>
-//           ))}
-//           <button type="button" onClick={addChildAge} className="mt-1 text-blue-600 hover:underline text-sm">
-//             + Add Child Age
-//           </button>
-//         </div>
-
-//         <SelectField name="leadSource" options={leadSources} value={formData.leadSource} onChange={handleChange} />
-//         <SelectField name="leadType" options={leadTypes} value={formData.leadType} onChange={handleChange} />
-//         <SelectField name="tripType" options={tripTypes} value={formData.tripType} onChange={handleChange} />
-//         <SelectField name="leadStatus" options={leadStatuses} value={formData.leadStatus} onChange={handleChange} />
-//       </div>
-
-//       <div className="mt-2">
-//         <label className="block text-xs font-medium text-gray-700 mb-0.5">Notes</label>
-//         <textarea
-//           name="notes"
-//           value={formData.notes}
-//           onChange={handleChange}
-//           rows="3"
-//           placeholder="Add any notes or remarks..."
-//           className="w-full px-3 py-1.5 border border-gray-300 rounded-lg text-sm"
-//         ></textarea>
-//       </div>
-
-//       <div className="mt-3 flex gap-2">
-//         <button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-//           {isSubmitting ? "Saving..." : "Save Lead"}
-//         </button>
-//         <button type="button" onClick={onClose} className="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded">
-//           Cancel
-//         </button>
-//       </div>
-
-//       {apiError && <p className="text-red-600 mt-2">{apiError}</p>}
-//       {submitSuccess && <p className="text-green-600 mt-2">Lead saved successfully!</p>}
-//     </form>
-//   );
-// };
-
-// // 🧩 Main Component
-// const EmployeeLeads = () => {
-//   const [leads, setLeads] = useState([]);
-//   const [loading, setLoading] = useState(true);
-//   const [error, setError] = useState("");
-//   const [viewLead, setViewLead] = useState(null);
-//   const [editLead, setEditLead] = useState(null);
-//   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-
-//   const employeeId = localStorage.getItem("userId"); // employee ID
-
-//   const fetchLeads = async () => {
-//     setLoading(true);
-//     setError("");
-//     if (!employeeId) { setError("Employee ID not found"); setLoading(false); return; }
-//     try {
-//       const res = await fetch(`http://localhost:4000/employeelead/employee/${employeeId}`);
-//       if (!res.ok) throw new Error(`Server Error: ${res.status}`);
-//       const data = await res.json();
-//       setLeads((data.leads || []).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
-//     } catch (err) {
-//       setError(err.message || "Failed to fetch leads");
-//     } finally { setLoading(false); }
-//   };
-
-//   useEffect(() => { fetchLeads(); }, []);
-
-//   const handleView = (lead) => setViewLead(lead);
-//   const handleEdit = (lead) => setEditLead(lead);
-//   const closeModal = () => { setViewLead(null); setEditLead(null); setIsAddModalOpen(false); };
-
-//   const handleAddLead = async (data) => {
-//     const payload = { ...data, employee: employeeId }; // include employee
-//     const res = await fetch("http://localhost:4000/employeelead", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(payload),
-//     });
-//     if (!res.ok) throw new Error("Failed to create lead");
-//     await fetchLeads();
-//   };
-
-//   const handleUpdateLead = async (data) => {
-//     if (!editLead) return;
-//     const payload = { ...data, employee: employeeId }; // include employee
-//     const res = await fetch(`http://localhost:4000/employeelead/${editLead._id}`, {
-//       method: "PUT",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify(payload),
-//     });
-//     if (!res.ok) throw new Error("Failed to update lead");
-//     await fetchLeads();
-//   };
-
-//   const formatDate = (dateString) => {
-//     if (!dateString) return "-";
-//     const date = new Date(dateString);
-//     return date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
-//   };
-
-//   return (
-//     <div className="p-4">
-//       <button
-//         onClick={() => setIsAddModalOpen(true)}
-//         className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition"
-//       >
-//         <Plus className="w-4 h-4" /> Add Lead
-//       </button>
-
-//       <div className="mt-6 overflow-x-auto">
-//         {loading ? <p>Loading leads...</p> :
-//          error || leads.length === 0 ? <p className="text-gray-600">Please Enter Leads</p> :
-//          <table className="min-w-full border border-gray-300 rounded-lg">
-//           <thead className="bg-gray-100">
-//             <tr>
-//               <th className="px-4 py-2 border">Name</th>
-//               <th className="px-4 py-2 border">Email</th>
-//               <th className="px-4 py-2 border">Phone</th>
-//               <th className="px-4 py-2 border">Departure</th>
-//               <th className="px-4 py-2 border">Destination</th>
-//               <th className="px-4 py-2 border">Travel Date</th>
-//               <th className="px-4 py-2 border text-center">Actions</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             {leads.map((lead) => (
-//               <tr key={lead._id} className="hover:bg-gray-50 transition-colors">
-//                 <td className="px-4 py-2 border">{lead.name}</td>
-//                 <td className="px-4 py-2 border">{lead.email}</td>
-//                 <td className="px-4 py-2 border">{lead.phone}</td>
-//                 <td className="px-4 py-2 border">{lead.departureCity}</td>
-//                 <td className="px-4 py-2 border">{lead.destination}</td>
-//                 <td className="px-4 py-2 border">{formatDate(lead.expectedTravelDate)}</td>
-//                 <td className="px-4 py-2 border text-center">
-//                   <div className="flex justify-center gap-2">
-//                     <button onClick={() => handleView(lead)} className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="View Lead"><Eye size={16} /></button>
-//                     <button onClick={() => handleEdit(lead)} className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="Edit Lead"><Edit2 size={16} /></button>
-//                   </div>
-//                 </td>
-//               </tr>
-//             ))}
-//           </tbody>
-//          </table>}
-//       </div>
-
-//       {/* Add/Edit Modal */}
-//       {(isAddModalOpen || editLead) && (
-//         <Modal isOpen={true} onClose={closeModal} size="large">
-//           <div className="flex flex-col h-full max-h-[95vh]">
-//             <div className="p-4 border-b flex justify-between items-center">
-//               <h2 className="text-lg font-bold text-gray-900">
-//                 {editLead ? "Edit Lead" : "Add New Lead"}
-//               </h2>
-//               <button onClick={closeModal} className="text-gray-600 hover:text-gray-800"><X size={20} /></button>
-//             </div>
-//             <div className="flex-1 overflow-y-auto p-4">
-//               <LeadForm
-//                 initialData={editLead || {
-//                   name: "", email: "", phone: "", whatsAppNo: "",
-//                   departureCity: "", destination: "", expectedTravelDate: "",
-//                   noOfDays: "", customNoOfDays: "", placesToCover: "",
-//                   noOfPerson: "", noOfChild: "", childAges: [],
-//                   groupNumber: "",
-//                   leadSource: "", leadType: "", tripType: "",
-//                   leadStatus: "Hot", notes: "",
-//                   employee: employeeId // ✅ include employee
-//                 }}
-//                 onSubmit={editLead ? handleUpdateLead : handleAddLead}
-//                 onClose={closeModal}
-//               />
-//             </div>
-//           </div>
-//         </Modal>
-//       )}
-
-//       {/* View Lead Modal */}
-//       {viewLead && (
-//         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeModal}>
-//           <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
-//             <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"><X size={20} /></button>
-//             <h3 className="text-lg font-semibold mb-3">Lead Details</h3>
-//             <div className="space-y-2 text-sm">
-//               {Object.entries(viewLead).map(([key, val]) => (
-//                 key !== "_id" && key !== "__v" && (
-//                   <p key={key}><span className="font-medium">{key.charAt(0).toUpperCase() + key.slice(1)}:</span> {Array.isArray(val) ? val.join(", ") : val || "-"}</p>
-//                 )
-//               ))}
-//             </div>
-//           </div>
-//         </div>
-//       )}
-//     </div>
-//   );
-// };
-
-// export default EmployeeLeads;
 
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, AlertCircle, Eye, Edit2, X } from "lucide-react";
@@ -777,7 +20,7 @@ const tripDurations = [
 const pageSize = 100;
 
 // 🧩 Input Field Component
-const InputField = ({ name, type = "text", placeholder, required, value, error, onChange }) => (
+const InputField = ({ name, type = "text", placeholder, required, value, error, onChange, disabled = false }) => (
   <div className="h-[4.5rem]">
     <label className="block text-xs font-medium text-gray-700 mb-0.5">
       {name.charAt(0).toUpperCase() + name.slice(1)} {required && <span className="text-red-500">*</span>}
@@ -788,7 +31,10 @@ const InputField = ({ name, type = "text", placeholder, required, value, error, 
       value={value || ""}
       onChange={onChange}
       placeholder={placeholder}
+      disabled={disabled}
       className={`w-full px-3 py-1.5 border rounded-lg text-sm outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+        disabled ? "bg-gray-100 cursor-not-allowed border-gray-300 text-gray-500" : ""
+      } ${
         error ? "border-red-300 bg-red-50" : "border-gray-300 hover:border-gray-400"
       }`}
       autoComplete="off"
@@ -844,7 +90,26 @@ const Modal = ({ isOpen, onClose, size = "large", children }) => {
 };
 
 // 🧩 Add/Edit Lead Form Component
-const LeadForm = ({ initialData, onSubmit, onClose }) => {
+const LeadForm = ({ initialData, onSubmit, onClose, isEditing = false }) => {
+  useEffect(() => {
+    console.log("LeadForm mounted/initialData:", initialData);
+  }, [initialData]);
+  const normalizeDateForInput = (val) => {
+    if (!val) return "";
+    // If already in YYYY-MM-DD form, return as-is
+    if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+    try {
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return "";
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      return `${yyyy}-${mm}-${dd}`;
+    } catch (e) {
+      return "";
+    }
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -868,6 +133,7 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
     notes: "",
     ...initialData,
     placesToCoverArray: initialData?.placesToCoverArray || (initialData?.placesToCover ? initialData.placesToCover.split(", ").map(p => p.trim()) : []),
+    expectedTravelDate: normalizeDateForInput(initialData?.expectedTravelDate),
   });
 
   const [errors, setErrors] = useState({});
@@ -883,11 +149,11 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
       whatsAppNo: "",
       departureCity: "",
       destination: "",
-      expectedTravelDate: "",
+      expectedTravelDate: normalizeDateForInput(initialData?.expectedTravelDate),
       noOfDays: "",
       customNoOfDays: "",
       placesToCover: "",
-      placesToCoverArray: initialData?.placesToCoverArray || (initialData?.placesToCover ? initialData.placesToCover.split(", ").map(p => p.trim()) : []),
+      placesToCoverArray: initialData?.placesToCoverArray || (initialData?.placesToCover ? initialData.placesToCover.split(",").map(p => p.trim()).filter(Boolean) : []),
       noOfPerson: "",
       noOfChild: "",
       childAges: [],
@@ -899,6 +165,14 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
       notes: "",
       ...initialData,
     });
+  }, [initialData]);
+
+  // Local input for adding places (supports Add button and comma-separated paste)
+  const [placeInput, setPlaceInput] = useState("");
+
+  useEffect(() => {
+    // reset small place input when initial data changes
+    setPlaceInput("");
   }, [initialData]);
 
   // Validation
@@ -929,20 +203,23 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
 
   // Places to cover handlers
   const handleAddPlace = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const place = e.target.value.trim();
-      if (!place) return;
+    if (e && e.type === "keydown" && e.key !== "Enter") return;
+    if (e && e.preventDefault) e.preventDefault();
 
-      const currentPlaces = formData.placesToCoverArray || [];
-      if (!currentPlaces.includes(place)) {
-        setFormData((prev) => ({
-          ...prev,
-          placesToCoverArray: [...currentPlaces, place],
-        }));
-      }
-      e.target.value = "";
-    }
+    const inputVal = (placeInput || "").trim();
+    if (!inputVal) return;
+
+    // allow comma-separated multiple places
+    const parts = inputVal.split(",").map(p => p.trim()).filter(Boolean);
+    if (parts.length === 0) return;
+
+    setFormData((prev) => {
+      const current = prev.placesToCoverArray || [];
+      const merged = [...current];
+      parts.forEach(p => { if (!merged.includes(p)) merged.push(p); });
+      return { ...prev, placesToCoverArray: merged };
+    });
+    setPlaceInput("");
   };
   const removePlace = (index) => {
     const updatedPlaces = [...(formData.placesToCoverArray || [])];
@@ -961,6 +238,16 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
       ...formData,
       placesToCover: (formData.placesToCoverArray || []).join(", "),
     };
+
+    // Normalize date to ISO if user supplied a YYYY-MM-DD (input[type=date])
+    if (payload.expectedTravelDate && /^\d{4}-\d{2}-\d{2}$/.test(payload.expectedTravelDate)) {
+      try {
+        const iso = new Date(payload.expectedTravelDate);
+        if (!isNaN(iso.getTime())) payload.expectedTravelDate = iso.toISOString();
+      } catch (err) {
+        // ignore conversion error, send as-is
+      }
+    }
 
     setIsSubmitting(true);
     setApiError("");
@@ -983,7 +270,7 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <InputField name="name" value={formData.name} onChange={handleChange} />
         <InputField name="email" type="email" value={formData.email} onChange={handleChange} />
-        <InputField name="phone" value={formData.phone} onChange={handleChange} required error={errors.phone} />
+        <InputField name="phone" value={formData.phone} onChange={handleChange} required error={errors.phone} disabled={isEditing} />
         <InputField name="whatsAppNo" value={formData.whatsAppNo} onChange={handleChange} />
         <InputField name="departureCity" value={formData.departureCity} onChange={handleChange} />
         <DestinationSearchBox
@@ -1010,12 +297,17 @@ const LeadForm = ({ initialData, onSubmit, onClose }) => {
               </span>
             ))}
           </div>
-          <input
-            type="text"
-            placeholder="Type a place and press Enter"
-            onKeyDown={handleAddPlace}
-            className="w-full px-3 py-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-          />
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Type a place, press Enter or click Add"
+              value={placeInput}
+              onChange={(e) => setPlaceInput(e.target.value)}
+              onKeyDown={(e) => handleAddPlace(e)}
+              className="flex-1 px-3 py-1.5 border rounded-lg text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <button type="button" onClick={handleAddPlace} className="px-3 py-1 bg-blue-600 text-white rounded">Add</button>
+          </div>
         </div>
 
         <InputField name="noOfPerson" type="number" value={formData.noOfPerson} onChange={handleChange} />
@@ -1081,6 +373,7 @@ const EmployeeLeads = () => {
   const [editDestAssignedLead, setEditDestAssignedLead] = useState(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("my-leads");
+  const [transferLeads, setTransferLeads] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const selectAllRef = useRef(null);
 
@@ -1158,6 +451,24 @@ const EmployeeLeads = () => {
     }
   };
 
+  // Fetch transfer-to-operation leads for current employee
+  const fetchTransferLeads = async () => {
+    if (!employeeId) return;
+    try {
+      const res = await fetch(`http://localhost:4000/employeelead/transfer/employee/${employeeId}`);
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setTransferLeads(data.data || []);
+      } else {
+        console.error("Failed to fetch transfer leads:", data.message);
+        setTransferLeads([]);
+      }
+    } catch (err) {
+      console.error("Error fetching transfer leads:", err);
+      setTransferLeads([]);
+    }
+  };
+
   useEffect(() => { 
     fetchLeads(); 
   }, []);
@@ -1175,6 +486,8 @@ const EmployeeLeads = () => {
       fetchAssignedLeads();
     } else if (activeTab === "destination-assigned") {
       fetchDestinationAssignedLeads();
+    } else if (activeTab === "transfer") {
+      fetchTransferLeads();
     }
   }, [activeTab]);
 
@@ -1210,7 +523,31 @@ const EmployeeLeads = () => {
   const handleEdit = (lead) => setEditLead(lead);
   const handleEditAssigned = (lead) => setEditAssignedLead(lead);
   
+  const handleStatusChange = async (leadId, newStatus) => {
+    try {
+      const res = await fetch(`http://localhost:4000/employeelead/${leadId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ leadInterestStatus: newStatus }),
+      });
+      if (!res.ok) {
+        throw new Error("Failed to update status");
+      }
+      // Update lead in state
+      setLeads((prev) =>
+        prev.map((lead) =>
+          lead._id === leadId ? { ...lead, leadInterestStatus: newStatus } : lead
+        )
+      );
+      console.log(`✅ Lead status updated to: ${newStatus}`);
+    } catch (err) {
+      console.error("Error updating lead status:", err);
+      alert("Failed to update lead status");
+    }
+  };
+  
   const handleEditDestAssigned = async (lead) => {
+    console.log("handleEditDestAssigned called with lead:", lead);
     // Mark lead as actioned when employee takes action on routed lead
     try {
       await fetch(`http://localhost:4000/employeelead/action/${lead._id}`, {
@@ -1484,6 +821,33 @@ const EmployeeLeads = () => {
     }
   };
 
+  // Confirm transfer of a lead from My Leads to "Transfer to Operation"
+  const handleConfirmTransfer = async (lead) => {
+    if (!lead || !lead._id) return;
+    if (!window.confirm(`Confirm transfer of lead "${lead.name || lead.phone}" to Transfer to Operation?`)) return;
+
+    try {
+      // Call backend transfer endpoint which moves the document into Operation collection
+      const res = await fetch(`http://localhost:4000/employeelead/transfer/${lead._id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert("Failed to transfer lead: " + (data.message || res.statusText));
+        return;
+      }
+
+      // Update local state: remove from My Leads, add to Transfer list (use returned op document)
+      setLeads((prev) => prev.filter((l) => l._id !== lead._id));
+      setTransferLeads((prev) => [data.data, ...(prev || [])]);
+      alert("Lead transferred to Transfer to Operation.");
+    } catch (err) {
+      console.error("Error transferring lead:", err);
+      alert("Error transferring lead. Check console for details.");
+    }
+  };
+
   const formatDate = (dateString) => {
     if (!dateString) return "-";
     const date = new Date(dateString);
@@ -1492,32 +856,48 @@ const EmployeeLeads = () => {
 
   return (
     <div className="p-4">
-      {/* Tab Navigation */}
-      <div className="flex items-center gap-3 mb-4">
-        <button
-          onClick={() => setActiveTab("my-leads")}
-          className={`px-4 py-2 rounded font-medium ${activeTab === 'my-leads' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-        >
-          My Leads
-        </button>
-        <button
-          onClick={() => setActiveTab("assigned")}
-          className={`px-4 py-2 rounded font-medium ${activeTab === 'assigned' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-        >
-          My Assigned Lead
-        </button>
-        <button
-          onClick={() => setActiveTab("destination-assigned")}
-          className={`px-4 py-2 rounded font-medium ${activeTab === 'destination-assigned' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
-        >
-          Assigned by Destination
-        </button>
-      </div>
+      {/* Modern Tab Navigation */}
+      <nav className="flex items-center justify-between mb-6">
+        <div className="flex space-x-2 bg-white/60 backdrop-blur rounded-full px-2 py-1 shadow-sm">
+          <button
+            onClick={() => setActiveTab("my-leads")}
+            className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'my-leads' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            My Leads
+            {activeTab === 'my-leads' && <span className="absolute -bottom-2 left-3 right-3 h-0.5 bg-blue-600 rounded" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("assigned")}
+            className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'assigned' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            My Assigned Lead
+            {activeTab === 'assigned' && <span className="absolute -bottom-2 left-3 right-3 h-0.5 bg-blue-600 rounded" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("destination-assigned")}
+            className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'destination-assigned' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            Assigned by Destination
+            {activeTab === 'destination-assigned' && <span className="absolute -bottom-2 left-3 right-3 h-0.5 bg-blue-600 rounded" />}
+          </button>
+
+          <button
+            onClick={() => setActiveTab("transfer")}
+            className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-colors ${activeTab === 'transfer' ? 'text-blue-600 bg-blue-50' : 'text-gray-600 hover:bg-gray-100'}`}
+          >
+            Transfer to Operation
+            {activeTab === 'transfer' && <span className="absolute -bottom-2 left-3 right-3 h-0.5 bg-blue-600 rounded" />}
+          </button>
+        </div>
+        <div className="hidden sm:block text-sm text-gray-500">&nbsp;</div>
+      </nav>
 
       {/* My Leads Tab */}
       {activeTab === "my-leads" && (
         <>
-          <button onClick={() => setIsAddModalOpen(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
+          <button onClick={() => setIsAddModalOpen(true)} className=" ml-auto flex items-center gap-2 bg-black hover:bg-black text-white px-4 py-2 rounded-lg font-medium transition">
             <Plus className="w-4 h-4" /> Add Lead
           </button>
 
@@ -1546,9 +926,24 @@ const EmployeeLeads = () => {
                     <td className="px-4 py-2 border">{lead.destination}</td>
                     <td className="px-4 py-2 border">{formatDate(lead.expectedTravelDate)}</td>
                     <td className="px-4 py-2 border text-center">
-                      <div className="flex justify-center gap-2">
-                        <button onClick={() => handleView(lead)} className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="View Lead"><Eye size={16} /></button>
-                        <button onClick={() => handleEdit(lead)} className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="Edit Lead"><Edit2 size={16} /></button>
+                      <div className="flex justify-center gap-2 flex-col sm:flex-row">
+                        <div className="flex justify-center gap-2">
+                          <button onClick={() => handleView(lead)} className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="View Lead"><Eye size={16} /></button>
+                          <button onClick={() => handleEdit(lead)} className="p-2 rounded-full bg-green-100 text-green-600 hover:bg-green-200" title="Edit Lead"><Edit2 size={16} /></button>
+                          <button onClick={() => handleConfirmTransfer(lead)} className="px-3 py-1 rounded bg-yellow-100 text-yellow-800 hover:bg-yellow-200" title="Confirm Transfer">Confirm</button>
+                        </div>
+                        <select
+                          value={lead.leadInterestStatus || ""}
+                          onChange={(e) => handleStatusChange(lead._id, e.target.value)}
+                          className="px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 cursor-pointer"
+                        >
+                          <option value="">Select Status</option>
+                          <option value="Interested">Interested</option>
+                          <option value="Not Interested">Not Interested</option>
+                          <option value="Connected">Connected</option>
+                          <option value="Not Connected">Not Connected</option>
+                          <option value="Follow Up">Follow Up</option>
+                        </select>
                       </div>
                     </td>
                   </tr>
@@ -1611,6 +1006,7 @@ const EmployeeLeads = () => {
                                   initialData={editAssignedLead}
                                   onSubmit={handleSaveAssignedLead}
                                   onClose={closeModal}
+                                  isEditing={true}
                                 />
                                 <div className="text-xs text-gray-500 mt-2">On save, this lead will move to My Leads and be removed from assigned leads.</div>
                               </div>
@@ -1648,6 +1044,50 @@ const EmployeeLeads = () => {
           )}
         </>
       )}
+
+          {/* Transfer to Operation Tab */}
+          {activeTab === "transfer" && (
+            <>
+              {transferLeads.length === 0 ? (
+                <p className="text-gray-600">No leads in Transfer to Operation.</p>
+              ) : (
+                <>
+                  <div className="mt-6 overflow-x-auto">
+                    <table className="min-w-full border border-gray-300 rounded-lg">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-2 border">Name</th>
+                          <th className="px-4 py-2 border">Email</th>
+                          <th className="px-4 py-2 border">Phone</th>
+                          <th className="px-4 py-2 border">Departure</th>
+                          <th className="px-4 py-2 border">Destination</th>
+                          <th className="px-4 py-2 border">Travel Date</th>
+                          <th className="px-4 py-2 border text-center">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {transferLeads.map((lead) => (
+                          <tr key={lead._id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-4 py-2 border">{lead.name}</td>
+                            <td className="px-4 py-2 border">{lead.email}</td>
+                            <td className="px-4 py-2 border">{lead.phone}</td>
+                            <td className="px-4 py-2 border">{lead.departureCity}</td>
+                            <td className="px-4 py-2 border">{lead.destination}</td>
+                            <td className="px-4 py-2 border">{formatDate(lead.expectedTravelDate)}</td>
+                            <td className="px-4 py-2 border text-center">
+                              <div className="flex justify-center gap-2">
+                                <button onClick={() => handleView(lead)} className="p-2 rounded-full bg-blue-100 text-blue-600 hover:bg-blue-200" title="View Lead"><Eye size={16} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
+            </>
+          )}
 
       {/* Assigned by Destination Tab */}
       {activeTab === "destination-assigned" && (
@@ -1701,6 +1141,7 @@ const EmployeeLeads = () => {
                                   initialData={editDestAssignedLead}
                                   onSubmit={handleUpdateDestAssignedLead}
                                   onClose={closeModal}
+                                  isEditing={true}
                                 />
                                 <div className="text-xs text-gray-500 mt-2">This lead was automatically assigned to you based on destination matching.</div>
                               </div>
@@ -1734,24 +1175,110 @@ const EmployeeLeads = () => {
                 }}
                 onSubmit={editLead ? handleUpdateLead : handleAddLead}
                 onClose={closeModal}
+                isEditing={!!editLead}
               />
             </div>
           </div>
         </Modal>
       )}
 
-      {/* View Lead Modal */}
+      {/* View Lead Modal (read-only form) */}
       {viewLead && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={closeModal}>
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md p-6 relative" onClick={(e) => e.stopPropagation()}>
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6 relative max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <button onClick={closeModal} className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"><X size={20} /></button>
-            <h3 className="text-lg font-semibold mb-3">Lead Details</h3>
-            <div className="space-y-2 text-sm">
-              {Object.entries(viewLead).map(([key, val]) => (
-                key !== "_id" && key !== "__v" && (
-                  <p key={key}><span className="font-medium">{key.charAt(0).toUpperCase() + key.slice(1)}:</span> {Array.isArray(val) ? val.join(", ") : val || "-"}</p>
-                )
-              ))}
+            <h3 className="text-lg font-semibold mb-4 text-center">Lead Details</h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+              <div>
+                <label className="block text-xs text-gray-600">Name</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.name || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Email</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.email || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Phone</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.phone || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">WhatsApp</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.whatsAppNo || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Departure City</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.departureCity || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Destination</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.destination || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Expected Travel Date</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={formatDate(viewLead.expectedTravelDate)} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">No. of Days</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.noOfDays || viewLead.customNoOfDays || "-"} readOnly />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs text-gray-600">Places To Cover</label>
+                <textarea className="w-full px-3 py-1.5 border rounded bg-gray-50" rows={2} value={(viewLead.placesToCoverArray && viewLead.placesToCoverArray.join(", ")) || viewLead.placesToCover || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">No. of Persons</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.noOfPerson || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">No. of Children</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.noOfChild || "-"} readOnly />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs text-gray-600">Child Ages</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={(viewLead.childAges && viewLead.childAges.length ? viewLead.childAges.join(", ") : "-")} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Group Number</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.groupNumber || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Lead Source</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.leadSource || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Lead Type</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.leadType || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Trip Type</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.tripType || "-"} readOnly />
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600">Lead Status</label>
+                <input className="w-full px-3 py-1.5 border rounded bg-gray-50" value={viewLead.leadStatus || "-"} readOnly />
+              </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs text-gray-600">Notes</label>
+                <textarea className="w-full px-3 py-1.5 border rounded bg-gray-50" rows={4} value={viewLead.notes || "-"} readOnly />
+              </div>
             </div>
           </div>
         </div>

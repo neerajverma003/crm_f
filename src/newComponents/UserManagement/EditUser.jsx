@@ -126,7 +126,11 @@ const EditUser = ({ user, isOpen, onClose, onSave }) => {
 
     setIsSubmitting(true);
 
-    const endpoint = `http://localhost:4000/employee/editEmployee/${user._id}`;
+    let endpoint = `http://localhost:4000/employee/editEmployee/${user._id}`;
+
+    if (user.role && String(user.role).toLowerCase() === "admin") {
+      endpoint = `http://localhost:4000/editAdmin/${user._id}`;
+    }
 
     try {
       const payload = {

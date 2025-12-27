@@ -56,6 +56,7 @@ import CreateCustomer from "./newComponents/Operations/CreateCustomer.jsx";
 import CustomerData from "./newComponents/Operations/CustomerData.jsx";
 import UploadMaterial from "./newComponents/Tutorials/UploadMaterial.jsx";
 import TrainingMaterial from "./newComponents/Tutorials/TrainingMaterial.jsx";
+import DisputeClients from "./newComponents/dispute/DisputeClients.jsx";
 import CreateDestinationEmployee from "./newComponents/employee/CreateDestinationEmployee.jsx";
 import AssignDestinationEmployee from "./newComponents/employee/AssignDestinationEmployee.jsx";
 // import AssignEmployeeCompany from "./newComponents/employee/AssignEmployeeCompany.jsx"
@@ -448,6 +449,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={roles.all}>
             <CustomerData />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/dispute-clients",
+        element: (
+          <ProtectedRoute allowedRoles={roles.all}>
+            <DisputeClients />
           </ProtectedRoute>
         ),
       },

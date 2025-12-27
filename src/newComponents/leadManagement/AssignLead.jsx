@@ -178,7 +178,7 @@ export default function AssignLeads() {
   };
 
   const handleSelectAllAssignedVisible = () => {
-    const ids = visibleAssignedLeads.map((l) => String(l._id));
+    const ids = visibleAssignedLeads.map((l) => String(l.assignmentId));
     if (ids.length === 0) return;
     const allSelected = ids.every((id) => selectedAssignedLeads.map(String).includes(id));
     if (allSelected) {
@@ -206,11 +206,11 @@ export default function AssignLeads() {
   }, [someAssignedVisibleSelected, allAssignedVisibleSelected]);
 
   // Toggle checkbox in Assigned Leads table
-  const handleAssignedLeadCheck = (leadId) => {
+  const handleAssignedLeadCheck = (assignmentId) => {
     setSelectedAssignedLeads((prev) =>
-      prev.includes(leadId)
-        ? prev.filter((id) => id !== leadId)
-        : [...prev, leadId]
+      prev.includes(assignmentId)
+        ? prev.filter((id) => id !== assignmentId)
+        : [...prev, assignmentId]
     );
   };
 
@@ -255,6 +255,77 @@ export default function AssignLeads() {
     } catch (err) {
       console.error("Error reassigning leads:", err);
       alert("Error reassigning leads. Check console for details.");
+    }
+  };
+
+  // Bulk delete selected leads from "Assign Leads to Employee" tab
+  const bulkDeleteLeads = async () => {
+    if (selectedLeads.length === 0) {
+      alert("Please select at least one lead to delete.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedLeads.length} selected lead(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:4000/leads/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadIds: selectedLeads,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`Deleted ${selectedLeads.length} lead(s) successfully!`);
+        setSelectedLeads([]);
+        // Refresh leads list
+        setLeads((prev) => prev.filter((l) => !selectedLeads.includes(String(l._id))));
+      } else {
+        alert("Failed to delete leads: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error deleting leads:", err);
+      alert("Error deleting leads. Check console for details.");
+    }
+  };
+
+  // Bulk delete selected assigned leads from "Assigned Lead" tab
+  const bulkDeleteAssignedLeads = async () => {
+    if (selectedAssignedLeads.length === 0) {
+      alert("Please select at least one assigned lead to delete.");
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to delete ${selectedAssignedLeads.length} selected assigned lead(s)? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      console.log("Sending delete request with IDs:", selectedAssignedLeads);
+      const res = await fetch("http://localhost:4000/assignlead/bulk-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          leadIds: selectedAssignedLeads,
+        }),
+      });
+      const data = await res.json();
+      console.log("Response status:", res.status);
+      console.log("Response data:", data);
+      if (res.ok) {
+        alert(`Deleted ${selectedAssignedLeads.length} assigned lead(s) successfully!`);
+        setSelectedAssignedLeads([]);
+        // Refresh assigned leads list
+        fetchAssignedLeads(selectedEmployee);
+      } else {
+        alert("Failed to delete assigned leads: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error deleting assigned leads:", err);
+      alert("Error deleting assigned leads. Check console for details.");
     }
   };
 
@@ -308,6 +379,17 @@ export default function AssignLeads() {
             <p>Loading leads...</p>
           ) : (
             <div>
+              {selectedLeads.length > 0 && (
+                <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded flex items-center justify-between">
+                  <span className="text-red-700 font-medium">{selectedLeads.length} lead(s) selected</span>
+                  <button
+                    onClick={bulkDeleteLeads}
+                    className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  >
+                    Bulk Lead Delete
+                  </button>
+                </div>
+              )}
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse border">
                   <thead>
@@ -450,6 +532,17 @@ export default function AssignLeads() {
                 <p>No assigned leads for the selected employee.</p>
               ) : (
                 <>
+                  {selectedAssignedLeads.length > 0 && (
+                    <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded flex items-center justify-between">
+                      <span className="font-semibold">{selectedAssignedLeads.length} assigned lead(s) selected</span>
+                      <button
+                        onClick={bulkDeleteAssignedLeads}
+                        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 ml-4"
+                      >
+                        Bulk Lead Delete
+                      </button>
+                    </div>
+                  )}
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse border">
                       <thead>
@@ -458,7 +551,7 @@ export default function AssignLeads() {
                               <input
                                 type="checkbox"
                                 ref={selectAllAssignedRef}
-                                checked={visibleAssignedLeads.length > 0 && visibleAssignedLeads.every((l) => selectedAssignedLeads.map(String).includes(String(l._id)))}
+                                checked={visibleAssignedLeads.length > 0 && visibleAssignedLeads.every((l) => selectedAssignedLeads.map(String).includes(String(l.assignmentId)))}
                                 onChange={handleSelectAllAssignedVisible}
                               />
                               <div className="text-xs">All Select</div>
@@ -479,8 +572,8 @@ export default function AssignLeads() {
                             <td className="border px-3 py-2 text-center">
                               <input
                                 type="checkbox"
-                                checked={selectedAssignedLeads.includes(lead._id)}
-                                onChange={() => handleAssignedLeadCheck(lead._id)}
+                                checked={selectedAssignedLeads.includes(lead.assignmentId)}
+                                onChange={() => handleAssignedLeadCheck(lead.assignmentId)}
                               />
                             </td>
                             <td className="border px-3 py-2">{lead.name}</td>

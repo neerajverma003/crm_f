@@ -10,7 +10,9 @@ const Designation = () => {
 
   const [companies, setCompanies] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [allDepartments, setAllDepartments] = useState([]);
   const [designations, setDesignations] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filters, setFilters] = useState({
     companyId: "",
     departmentId: "",
@@ -48,27 +50,40 @@ const Designation = () => {
 
   // ✅ Fetch all designations
   const fetchDesignations = async () => {
-  try {
-    const res = await fetch("http://localhost:4000/designation");
-    const data = await res.json();
+    try {
+      const res = await fetch("http://localhost:4000/designation/");
+      const data = await res.json();
 
-    const list = Array.isArray(data.designations)
-      ? data.designations
-      : Array.isArray(data)
-      ? data
-      : [];
+      const list = Array.isArray(data.designations)
+        ? data.designations
+        : Array.isArray(data)
+        ? data
+        : [];
 
-    setDesignations(list);
-  } catch (error) {
-    console.error("Error fetching designations:", error);
-    setDesignations([]); // prevent crash
-  }
-};
+      setDesignations(list);
+    } catch (error) {
+      console.error("Error fetching designations:", error);
+      setDesignations([]); // prevent crash
+    }
+  };
+
+  // ✅ Fetch all departments on initial load for table display
+  const fetchAllDepartments = async () => {
+    try {
+      const res = await fetch("http://localhost:4000/department/department");
+      const data = await res.json();
+      setAllDepartments(data.departments || []);
+      setDepartments(data.departments || []);
+    } catch (error) {
+      console.error("Error fetching all departments:", error);
+    }
+  };
 
   // ✅ Initial Load
   useEffect(() => {
     fetchCompanies();
     fetchDesignations();
+    fetchAllDepartments();
   }, []);
 
   // ✅ When company changes, load related departments
@@ -88,7 +103,14 @@ const Designation = () => {
     setFilters((prev) => ({ ...prev, [name]: value }));
 
     if (name === "companyId") {
-      fetchDepartments(value); // 🔥 update filter departments
+      if (value) {
+        // Filter departments by selected company
+        const filtered = allDepartments.filter(d => d.company === value);
+        setDepartments(filtered);
+      } else {
+        // Show all departments if no company selected
+        setDepartments(allDepartments);
+      }
       setFilters((prev) => ({ ...prev, departmentId: "" }));
     }
   };
@@ -103,7 +125,7 @@ const Designation = () => {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/designation", {
+      const res = await fetch("http://localhost:4000/designation/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -113,16 +135,18 @@ const Designation = () => {
         }),
       });
 
-      const saved = await res.json();
-      if (!res.ok) throw new Error(saved.message);
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || "Failed to add designation");
+      }
 
-      alert("Designation added");
+      alert("Designation added successfully!");
       fetchDesignations();
       setFormData({ designation: "", companyId: "", departmentId: "" });
       setDepartments([]);
     } catch (error) {
       console.error("Add error:", error);
-      alert("Failed to add designation");
+      alert("Failed to add designation: " + error.message);
     }
   };
 
@@ -143,9 +167,12 @@ const Designation = () => {
     }
   };
 
-  // ✅ Apply filters
+  // ✅ Apply filters and search
   const filteredDesignations = designations.filter((d) => {
+    const searchMatch = d.designation.toLowerCase().includes(searchTerm.toLowerCase());
+    
     return (
+      searchMatch &&
       (!filters.companyId || d.company === filters.companyId) &&
       (!filters.departmentId || d.dep === filters.departmentId)
     );
@@ -213,40 +240,55 @@ const Designation = () => {
         </button>
       </form>
 
-      {/* Filters */}
-      <div className="bg-white p-4 rounded shadow mb-4 flex gap-4">
-        <div>
-          <label>Filter by Company</label>
-          <select
-            name="companyId"
-            value={filters.companyId}
-            onChange={handleFilterChange}
-            className="border p-2 rounded"
-          >
-            <option value="">All</option>
-            {companies.map((c) => (
-              <option key={c._id} value={c._id}>
-                {c.companyName}
-              </option>
-            ))}
-          </select>
+      {/* Search Bar and Filters Container */}
+      <div className="bg-white p-4 rounded shadow mb-4 flex gap-4 items-end">
+        {/* Search Bar */}
+        <div className="flex-shrink-0">
+          <label className="block text-sm font-medium mb-1">Search Designation</label>
+          <input
+            type="text"
+            placeholder="Search by designation..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="border p-2 rounded focus:ring-2 focus:ring-blue-500 w-64"
+          />
         </div>
 
-        <div>
-          <label>Filter by Department</label>
-          <select
-            name="departmentId"
-            value={filters.departmentId}
-            onChange={handleFilterChange}
-            className="border p-2 rounded"
-          >
-            <option value="">All</option>
-            {departments.map((d) => (
-              <option key={d._id} value={d._id}>
-                {d.dep}
-              </option>
-            ))}
-          </select>
+        {/* Filters */}
+        <div className="flex gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Filter by Company</label>
+            <select
+              name="companyId"
+              value={filters.companyId}
+              onChange={handleFilterChange}
+              className="border p-2 rounded"
+            >
+              <option value="">All</option>
+              {companies.map((c) => (
+                <option key={c._id} value={c._id}>
+                  {c.companyName}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Filter by Department</label>
+            <select
+              name="departmentId"
+              value={filters.departmentId}
+              onChange={handleFilterChange}
+              className="border p-2 rounded"
+            >
+              <option value="">All</option>
+              {departments.map((d) => (
+                <option key={d._id} value={d._id}>
+                  {d.dep}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -266,7 +308,7 @@ const Designation = () => {
               <tr key={d._id} className="border-b">
                 <td className="p-2">{d.designation}</td>
                 <td className="p-2">{companies.find(c => c._id === d.company)?.companyName}</td>
-                <td className="p-2">{departments.find(dep => dep._id === d.dep)?.dep}</td>
+                <td className="p-2">{allDepartments.find(dep => dep._id === d.dep)?.dep}</td>
                 <td className="p-2">
                   <button
                     onClick={() => handleDelete(d._id)}
