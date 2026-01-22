@@ -790,6 +790,7 @@ import Sidebar from "./Sidebar.jsx"; // Superadmin Sidebar
 import CompanySidebar from "./dashboard/CompanySidebar.jsx"; // Admin Company Sidebar
 import EmployeeSidebar from "./dashboard/EmployeeSidebar.jsx"; // Employee Sidebar
 import EmployeeHeader from "./EmployeeHeader.jsx";
+import AdminSidebar from "./AdminSidebar.jsx";
 
 const ScreenLayout = () => {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -890,19 +891,11 @@ const ScreenLayout = () => {
     SidebarComponent = Sidebar;
     console.log("✓ Superadmin sidebar selected");
   } 
-  // Admin: No sidebar on /dashboard, show CompanySidebar only when company is selected
+  // Admin: Show AdminSidebar on all routes (dashboard + other pages)
   else if (userRole === "admin") {
-    if (isMainDashboard) {
-      // Admin on /dashboard - NO SIDEBAR
-      SidebarComponent = null;
-      console.log("✓ Admin on /dashboard - No sidebar");
-    } else if (isCompanyDashboard || isCompanyContext) {
-      // Admin selected a company - SHOW CompanySidebar
-      SidebarComponent = CompanySidebar;
-      console.log("✓ Company sidebar selected for Admin");
-    } else {
-      console.log("✓ Admin without company selected - No sidebar");
-    }
+    // Always show AdminSidebar for admins on all pages
+    SidebarComponent = AdminSidebar;
+    console.log("✓ Admin sidebar selected");
   } else {
     console.warn("⚠ No sidebar selected - userRole:", userRole);
   }

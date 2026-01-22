@@ -748,6 +748,8 @@ const MainDashboard = () => {
     const [loadingAttendance, setLoadingAttendance] = useState(true);
 
     const [companies, setCompanies] = useState([]);
+    const [adminData, setAdminData] = useState(null);
+    const [companyRolesMap, setCompanyRolesMap] = useState({});
     const [loadingCompanies, setLoadingCompanies] = useState(true);
     const [errorCompanies, setErrorCompanies] = useState("");
 
@@ -900,32 +902,81 @@ const MainDashboard = () => {
         fetchCompanies();
     }, [role]);
 
-    // 🏢 Fetch Assigned Company for Admin
+    // 🏢 Fetch Assigned Companies with Roles for Admin
     useEffect(() => {
-        const fetchAdminCompany = async () => {
+        const fetchAdminCompaniesAndRoles = async () => {
             if (role === "admin") {
                 try {
                     const adminId = localStorage.getItem("userId");
                     if (!adminId) return;
 
-                    const res = await axios.get(`http://localhost:4000/getCompanyByAdminId/${adminId}`);
+                    const res = await axios.get(`http://localhost:4000/getassignedroles/${adminId}`);
                     const data = res.data;
-                    console.log(data);
-                    if (data?.assignedCompanies?.length > 0) {
-                        setCompanies(data.assignedCompanies);
+                    console.log("Admin data with roles:", data);
+                    
+                    if (data?.admin) {
+                        setAdminData(data.admin);
+                        
+                        // Build company list and role mapping
+                        const companyMap = {};
+                        const rolesMap = {};
+                        
+                        if (data.admin.assignedRoles && Array.isArray(data.admin.assignedRoles)) {
+                            data.admin.assignedRoles.forEach((roleAssignment) => {
+                                if (roleAssignment.companyIds && Array.isArray(roleAssignment.companyIds)) {
+                                    roleAssignment.companyIds.forEach((company) => {
+                                        const companyId = company._id || company;
+                                        const companyName = company.companyName || "Unknown Company";
+                                        
+                                        if (!companyMap[companyId]) {
+                                            companyMap[companyId] = {
+                                                _id: companyId,
+                                                companyName: companyName
+                                            };
+                                            rolesMap[companyId] = [];
+                                        }
+                                        
+                                        // Add role
+                                        if (roleAssignment.roleId) {
+                                            const roleLabel = roleAssignment.roleId.role || "Unknown Role";
+                                            rolesMap[companyId].push({
+                                                type: "role",
+                                                name: roleLabel,
+                                                id: roleAssignment.roleId._id
+                                            });
+                                        }
+                                        
+                                        // Add sub-roles
+                                        if (roleAssignment.subRoles && Array.isArray(roleAssignment.subRoles)) {
+                                            roleAssignment.subRoles.forEach((subRole) => {
+                                                const subRoleName = subRole.subRoleName || "Unknown SubRole";
+                                                rolesMap[companyId].push({
+                                                    type: "subrole",
+                                                    name: subRoleName,
+                                                    id: subRole._id
+                                                });
+                                            });
+                                        }
+                                    });
+                                }
+                            });
+                        }
+                        
+                        setCompanies(Object.values(companyMap));
+                        setCompanyRolesMap(rolesMap);
                     } else {
                         setCompanies([]);
                     }
                 } catch (err) {
-                    console.error("Error fetching admin company:", err);
-                    setErrorCompanies("Failed to load assigned company");
+                    console.error("Error fetching admin companies and roles:", err);
+                    setErrorCompanies("Failed to load assigned companies and roles");
                 } finally {
                     setLoadingCompanies(false);
                 }
             }
         };
 
-        fetchAdminCompany();
+        fetchAdminCompaniesAndRoles();
     }, [role]);
 
     // 📅 Filter Attendance by Selected Date
