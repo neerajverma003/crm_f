@@ -226,7 +226,7 @@
 //         try {
 //             // Use provided month or fall back to currentMonth
 //             const month = monthToFetch || currentMonth;
-            
+
 //             // Get the current month's start and end dates
 //             const year = month.getFullYear();
 //             const monthNum = month.getMonth();
@@ -288,7 +288,7 @@
 
 //                 if (!res.ok) throw new Error("Failed to update");
 //                 const result = await res.json();
-                
+
 //                 // Refresh attendance data
 //                 if (selectedUser?._id) {
 //                     fetchMonthlyAttendance(selectedUser);
@@ -309,7 +309,7 @@
 //                 });
 
 //                 if (!res.ok) throw new Error("Failed to create attendance");
-                
+
 //                 // Refresh attendance data
 //                 if (selectedUser?._id) {
 //                     fetchMonthlyAttendance(selectedUser);
@@ -871,7 +871,7 @@
 //               ${calendarHtml}
 //             </div>
 //           </div>
-          
+
 //           <!-- PAGE 2: Summaries -->
 //           <div class="page-2">
 //             <div style="display: flex; flex-direction: column; gap: 24px;">
@@ -1420,15 +1420,15 @@
 //             transform: translateY(0);
 //           }
 //         }
-        
+
 //         .animate-in {
 //           animation: slideInFromBottom 0.5s ease-out;
 //         }
-        
+
 //         .fade-in {
 //           animation: fadeIn 0.3s ease-in;
 //         }
-        
+
 //         @keyframes fadeIn {
 //           from {
 //             opacity: 0;
@@ -1437,15 +1437,15 @@
 //             opacity: 1;
 //           }
 //         }
-        
+
 //         .slide-in-from-bottom-4 {
 //           animation: slideInFromBottom 0.5s ease-out;
 //         }
-        
+
 //         .zoom-in {
 //           animation: zoomIn 0.3s ease-out;
 //         }
-        
+
 //         @keyframes zoomIn {
 //           from {
 //             opacity: 0;
@@ -1463,17 +1463,18 @@
 
 // export default AdminAttendance;
 
-
 import React, { useEffect, useState, useRef } from "react";
 import { Eye, Edit2, Trash2, X, Users, CheckCircle, XCircle, Mail, Phone, Printer } from "lucide-react";
 import axios from "axios";
 
-const AdminAttendance = ({searchText, isEmployeeView = false }) => {
+const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
     console.log("EmployeeTable rendered");
     const userId = localStorage.getItem("userId");
     const [data, setData] = useState({ active: [], inactive: [] });
     const [activeTab, setActiveTab] = useState("active");
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
+
     const [searchQuery, setSearchQuery] = useState("");
     const [filterRole, setFilterRole] = useState("All");
     const [viewModal, setViewModal] = useState(false);
@@ -1509,7 +1510,6 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
         try {
             setLoading(true);
             // console.log("abz");
-            
 
             // If in employee view, only fetch current employee's data
             if (isEmployeeView && userId) {
@@ -1643,10 +1643,10 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
     // useEffect(() => {
     //     fetchAllData();
     // }, [isEmployeeView, userId]);
-    
+
     useEffect(() => {
-            fetchAllData();
-        }, []);
+        fetchAllData();
+    }, []);
 
     /* -------------------------------------------------------------------------- */
     /* 📅 Refetch monthly attendance when month changes */
@@ -1658,10 +1658,10 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
     // }, [currentMonth, selectedUser]);
 
     useEffect(() => {
-            if (selectedUser && viewModal) {
-                fetchMonthlyAttendance(selectedUser);
-            }
-        }, [currentMonth, selectedUser, viewModal]);
+        if (selectedUser && viewModal) {
+            fetchMonthlyAttendance(selectedUser);
+        }
+    }, [currentMonth, selectedUser, viewModal]);
 
     /* -------------------------------------------------------------------------- */
     /* 🔍 Filter & Search Data */
@@ -1711,7 +1711,7 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
         try {
             // Use provided month or fall back to currentMonth
             const month = monthToFetch || currentMonth;
-            
+
             // Get the current month's start and end dates
             const year = month.getFullYear();
             const monthNum = month.getMonth();
@@ -1719,22 +1719,26 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
             const lastDay = new Date(year, monthNum + 1, 0).toISOString().split("T")[0];
 
             let attendanceData = [];
+            setCurrentUser(user)
+            console.log(user);
+            
 
             if (user.userType === "Admin") {
                 // Fetch only this admin's attendance for the current month
                 const res = await axios.get(
-                    `http://localhost:4000/adminAttendance/getAllAttendance?adminId=${user._id}&startDate=${firstDay}&endDate=${lastDay}`
+                    `http://localhost:4000/adminAttendance/getAllAttendance?adminId=${user._id}&startDate=${firstDay}&endDate=${lastDay}`,
                 );
                 attendanceData = Array.isArray(res?.data) ? res.data : [];
             } else {
                 // Fetch only this employee's attendance for the current month
                 const res = await axios.get(
-                    `http://localhost:4000/attendance/getAllAttendance?employeeId=${user._id}&startDate=${firstDay}&endDate=${lastDay}`
+                    `http://localhost:4000/attendance/getAllAttendance?employeeId=${user._id}&startDate=${firstDay}&endDate=${lastDay}`,
                 );
                 attendanceData = Array.isArray(res?.data) ? res.data : [];
             }
 
             setMonthlyAttendance(attendanceData);
+            
         } catch (error) {
             console.error("⚠️ Error fetching monthly attendance:", error);
             setMonthlyAttendance([]);
@@ -1773,7 +1777,7 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
 
                 if (!res.ok) throw new Error("Failed to update");
                 const result = await res.json();
-                
+
                 // Refresh attendance data
                 if (selectedUser?._id) {
                     fetchMonthlyAttendance(selectedUser);
@@ -1794,7 +1798,7 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
                 });
 
                 if (!res.ok) throw new Error("Failed to create attendance");
-                
+
                 // Refresh attendance data
                 if (selectedUser?._id) {
                     fetchMonthlyAttendance(selectedUser);
@@ -1887,12 +1891,8 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
             return local.toISOString().slice(0, 16);
         };
 
-        const [clockIn, setClockIn] = useState(
-            dayRecords && dayRecords.length > 0 ? formatLocalDateTime(dayRecords[0]?.clockIn) : ""
-        );
-        const [clockOut, setClockOut] = useState(
-            dayRecords && dayRecords.length > 0 ? formatLocalDateTime(dayRecords[0]?.clockOut) : ""
-        );
+        const [clockIn, setClockIn] = useState(dayRecords && dayRecords.length > 0 ? formatLocalDateTime(dayRecords[0]?.clockIn) : "");
+        const [clockOut, setClockOut] = useState(dayRecords && dayRecords.length > 0 ? formatLocalDateTime(dayRecords[0]?.clockOut) : "");
         const [status, setStatus] = useState(dayRecords && dayRecords.length > 0 ? dayRecords[0]?.status : "Present");
 
         const handleSubmit = () => {
@@ -1956,7 +1956,10 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
                                 onChange={(e) => setStatus(e.target.value)}
                             >
                                 {statusOptions.map((s) => (
-                                    <option key={s} value={s}>
+                                    <option
+                                        key={s}
+                                        value={s}
+                                    >
                                         {s}
                                     </option>
                                 ))}
@@ -2022,28 +2025,28 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
                     key={user._id || index}
                     className="border-b border-gray-200 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent"
                 >
-                <td className="px-4 py-3 font-medium text-gray-600">{index + 1}</td>
+                    <td className="px-4 py-3 font-medium text-gray-600">{index + 1}</td>
 
-                {/* User Avatar + Name */}
-                <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 text-sm font-semibold text-white">
-                            {name.charAt(0).toUpperCase()}
+                    {/* User Avatar + Name */}
+                    <td className="px-4 py-3">
+                        <div className="flex items-center gap-3">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 text-sm font-semibold text-white">
+                                {name.charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <p className="text-sm font-semibold text-gray-800">{name}</p>
+                                <p className="text-xs text-gray-500">{email}</p>
+                            </div>
                         </div>
-                        <div>
-                            <p className="text-sm font-semibold text-gray-800">{name}</p>
-                            <p className="text-xs text-gray-500">{email}</p>
-                        </div>
-                    </div>
-                </td>
+                    </td>
 
-                {/* Role Badge */}
-                <td className="px-4 py-3">
-                    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${roleColor}`}>{role}</span>
-                </td>
+                    {/* Role Badge */}
+                    <td className="px-4 py-3">
+                        <span className={`rounded-full px-3 py-1 text-xs font-semibold ${roleColor}`}>{role}</span>
+                    </td>
 
-                {/* Designation */}
-                {/* <td className="px-4 py-3 text-sm text-gray-700 ">
+                    {/* Designation */}
+                    {/* <td className="px-4 py-3 text-sm text-gray-700 ">
                     {user.userType === "Admin"
                         ? typeof user?.designation === "object"
                             ? user?.designation?.designation || "Admin"
@@ -2053,52 +2056,52 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
                           : user?.designation || "N/A"}
                 </td> */}
 
-                <td className="px-4 py-3">
-                    <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">{getDesignationName(user)}</span>
-                </td>
+                    <td className="px-4 py-3">
+                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">{getDesignationName(user)}</span>
+                    </td>
 
-                {/* Department */}
-                <td className="px-4 py-3 text-sm text-gray-700">{department}</td>
+                    {/* Department */}
+                    <td className="px-4 py-3 text-sm text-gray-700">{department}</td>
 
-                {/* Company */}
-                <td className="px-4 py-3 text-sm font-medium text-gray-700">{company}</td>
+                    {/* Company */}
+                    <td className="px-4 py-3 text-sm font-medium text-gray-700">{company}</td>
 
-                {/* Today's Date - Clock In/Out */}
-                <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                        <p className="text-xs font-medium text-gray-600">{new Date().toLocaleDateString("en-IN")}</p>
-                        <div className="flex items-center gap-2 text-xs">
-                            <span
-                                className={`rounded px-2 py-1 font-medium ${clockInTime === "--:--" ? "bg-gray-50 text-gray-600" : "bg-blue-50 text-blue-700"}`}
-                            >
-                                IN: {clockInTime}
-                            </span>
-                            <span
-                                className={`rounded px-2 py-1 font-medium ${clockOutTime === "--:--" ? "bg-gray-50 text-gray-600" : "bg-amber-50 text-amber-700"}`}
-                            >
-                                OUT: {clockOutTime}
-                            </span>
+                    {/* Today's Date - Clock In/Out */}
+                    <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                            <p className="text-xs font-medium text-gray-600">{new Date().toLocaleDateString("en-IN")}</p>
+                            <div className="flex items-center gap-2 text-xs">
+                                <span
+                                    className={`rounded px-2 py-1 font-medium ${clockInTime === "--:--" ? "bg-gray-50 text-gray-600" : "bg-blue-50 text-blue-700"}`}
+                                >
+                                    IN: {clockInTime}
+                                </span>
+                                <span
+                                    className={`rounded px-2 py-1 font-medium ${clockOutTime === "--:--" ? "bg-gray-50 text-gray-600" : "bg-amber-50 text-amber-700"}`}
+                                >
+                                    OUT: {clockOutTime}
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </td>
+                    </td>
 
-                {/* Actions */}
-                <td className="flex gap-2 px-4 py-3">
-                    <button
-                    disabled={viewModal}
-                        onClick={() => handleViewClick(user)}
-                        className="rounded-full bg-blue-100 p-2 text-blue-600 shadow-sm"
-                        title="View Details"
-                    >
-                        <Eye size={16} />
-                    </button>
-                    {/* <button
+                    {/* Actions */}
+                    <td className="flex gap-2 px-4 py-3">
+                        <button
+                            disabled={viewModal}
+                            onClick={() => handleViewClick(user)}
+                            className="rounded-full bg-blue-100 p-2 text-blue-600 shadow-sm"
+                            title="View Details"
+                        >
+                            <Eye size={16} />
+                        </button>
+                        {/* <button
                         className="rounded-full bg-gray-100 p-2 text-gray-600 shadow-sm  hover:bg-gray-200 hover:shadow-md"
                         title="Edit"
                     >
                         <Edit2 size={16} />
                     </button> */}
-                    {/* {globalRole === "admin" && role === "Employee" && (
+                        {/* {globalRole === "admin" && role === "Employee" && (
                         <button
                             className="rounded-full bg-gray-100 p-2 text-gray-600 shadow-sm transition-colors duration-200 hover:bg-gray-200 hover:shadow-md"
                             title="Edit"
@@ -2106,8 +2109,8 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
                             <Edit2 size={16} />
                         </button>
                     )} */}
-                </td>
-            </tr>
+                    </td>
+                </tr>
             </>
         );
     };
@@ -2116,6 +2119,8 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
     /* 📅 Monthly Attendance Grid Component */
     /* -------------------------------------------------------------------------- */
     const MonthlyAttendanceGrid = ({ attendanceData, month }) => {
+            // console.log(currentUser?.userType);
+
         // Get all days in the month
         const year = month.getFullYear();
         const monthNum = month.getMonth();
@@ -2212,8 +2217,9 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
             days.push(
                 <div
                     key={i}
-                    className={`cursor-pointer rounded-xl border-2 p-4   hover:shadow-lg ${getStatusColor(status)}`}
-                    onDoubleClick={() => handleDateCardDoubleClick(date, dayRecords)}
+                    className={`cursor-pointer rounded-xl border-2 p-4 hover:shadow-lg ${getStatusColor(status)}`}
+                    // onDoubleClick={() => handleDateCardDoubleClick(date, dayRecords)}
+                    onDoubleClick={globalRole === "admin" && currentUser?.userType=="Employee" ? () => handleDateCardDoubleClick(date, dayRecords) : undefined}
                     title="Double-click to edit"
                 >
                     <div className="space-y-3">
@@ -2287,7 +2293,7 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
     //     // if (!printRef.current) return;
     //     if (!printRef.current || modalLoading) return;
     //     console.log(printRef.current);
-        
+
     //     const printContent = printRef.current.innerHTML;
     //     const parser = new DOMParser();
     //     const doc = parser.parseFromString(printContent, "text/html");
@@ -2360,7 +2366,7 @@ const AdminAttendance = ({searchText, isEmployeeView = false }) => {
     //           ${calendarHtml}
     //         </div>
     //       </div>
-          
+
     //       <!-- PAGE 2: Summaries -->
     //       <div class="page-2">
     //         <div style="display: flex; flex-direction: column; gap: 24px;">
