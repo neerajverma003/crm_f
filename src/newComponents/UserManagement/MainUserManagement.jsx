@@ -57,6 +57,62 @@
 
 // export default MainUserManagement;
 
+// import React, { useState } from "react";
+// import UserCard from "./UserCard.jsx";
+// import { SearchUser } from "./SearchUser.jsx";
+// import { SearchRole } from "./SearchRoles.jsx";
+// import AddUser from "./AddUser.jsx";
+// import UserTable from "./UserTable.jsx";
+
+// const MainUserManagement = () => {
+    
+//     const [searchTerm, setSearchTerm] = useState("");
+//     const [roleFilter, setRoleFilter] = useState("All Roles");
+
+//     const cardData = [
+//         { title: "Total Users", icon: "icon", value: 89, description: "+5 new this month" },
+//         { title: "Active Users", icon: "icon", value: 84, description: "94.4% active rate" },
+//         { title: "Admins", icon: "icon", value: 3, description: "System administrators" },
+//         { title: "New This Week", icon: "icon", value: 7, description: "+2 from last week" },
+//     ];
+
+//     return (
+//         <div className="flex flex-col gap-6 w-full">
+//             {/* Header */}
+//             <div>
+//                 <h1 className="mb-2 text-2xl font-bold text-gray-900">User Management</h1>
+//                 <p className="text-gray-600">
+//                     Manage users, roles, and permissions across your organization
+//                 </p>
+//             </div>
+
+//             {/* Stats Cards */}
+//             <div className="grid grid-rows-1 gap-6 sm:grid-rows-1 lg:grid-rows-1">
+//                 <UserCard emp/>
+//             </div>
+
+//             {/* Search + Filter + Add */}
+//             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+//                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+//                     <SearchUser onSearch={setSearchTerm} />
+//                     <SearchRole onRoleChange={setRoleFilter} />
+//                 </div>
+//                 <AddUser />
+//             </div>
+
+//             {/* User Table */}
+//             <div className="w-full">
+//                 <UserTable searchTerm={searchTerm} roleFilter={roleFilter} />
+//             </div>
+//         </div>
+//     );
+// };
+
+// export default MainUserManagement;
+
+
+
+
 import React, { useState } from "react";
 import UserCard from "./UserCard.jsx";
 import { SearchUser } from "./SearchUser.jsx";
@@ -77,32 +133,35 @@ const MainUserManagement = () => {
     ];
 
     return (
-        <div className="flex flex-col gap-6 w-full">
-            {/* Header */}
-            <div>
-                <h1 className="mb-2 text-2xl font-bold text-gray-900">User Management</h1>
-                <p className="text-gray-600">
-                    Manage users, roles, and permissions across your organization
-                </p>
-            </div>
-
-            {/* Stats Cards */}
-            <div className="grid grid-rows-1 gap-6 sm:grid-rows-1 lg:grid-rows-1">
-                <UserCard emp/>
-            </div>
-
-            {/* Search + Filter + Add */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-                    <SearchUser onSearch={setSearchTerm} />
-                    <SearchRole onRoleChange={setRoleFilter} />
+        <div className="bg-[#f8fafc] min-h-dvh py-4 sm:px-6 lg:px-8">
+            <div className="flex w-full flex-col gap-6">
+                {/* Header */}
+                <div>
+                    <h1 className="mb-2 text-2xl font-bold text-gray-900">User Management</h1>
+                    <p className="text-gray-600">Manage users, roles, and permissions across your organization</p>
                 </div>
-                <AddUser />
-            </div>
 
-            {/* User Table */}
-            <div className="w-full">
-                <UserTable searchTerm={searchTerm} roleFilter={roleFilter} />
+                {/* Stats Cards */}
+                <div className="grid grid-rows-1 gap-6 sm:grid-rows-1 lg:grid-rows-1">
+                    <UserCard emp />
+                </div>
+
+                {/* Search + Filter + Add */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                        <SearchUser onSearch={setSearchTerm} />
+                        <SearchRole onRoleChange={setRoleFilter} />
+                    </div>
+                    <AddUser />
+                </div>
+
+                {/* User Table */}
+                <div className="w-full">
+                    <UserTable
+                        searchTerm={searchTerm}
+                        roleFilter={roleFilter}
+                    />
+                </div>
             </div>
         </div>
     );

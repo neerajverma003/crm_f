@@ -384,7 +384,7 @@ const Header = () => {
                             </div>
 
                             {/* DESKTOP — Title */}
-                            <h1 className="hidden text-lg font-semibold text-gray-700 sm:block sm:text-2xl">Dashboard Overview</h1>
+                            <h1 className="hidden text-lg font-semibold text-gray-700 sm:block sm:text-2xl sm:ml-5">Dashboard Overview</h1>
                         </div>
 
                         {/* RIGHT */}
