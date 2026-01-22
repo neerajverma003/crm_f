@@ -1468,7 +1468,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { Eye, Edit2, Trash2, X, Users, CheckCircle, XCircle, Mail, Phone, Printer } from "lucide-react";
 import axios from "axios";
 
-const AdminAttendance = ({ isEmployeeView = false }) => {
+const AdminAttendance = ({searchText, isEmployeeView = false }) => {
+    console.log("EmployeeTable rendered");
     const userId = localStorage.getItem("userId");
     const [data, setData] = useState({ active: [], inactive: [] });
     const [activeTab, setActiveTab] = useState("active");
@@ -2016,10 +2017,11 @@ const AdminAttendance = ({ isEmployeeView = false }) => {
         const statusColor = activeTab === "active" ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700";
 
         return (
-            <tr
-                key={user._id || index}
-                className="border-b border-gray-200 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent"
-            >
+            <>
+                <tr
+                    key={user._id || index}
+                    className="border-b border-gray-200 transition-all duration-200 hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent"
+                >
                 <td className="px-4 py-3 font-medium text-gray-600">{index + 1}</td>
 
                 {/* User Avatar + Name */}
@@ -2106,6 +2108,7 @@ const AdminAttendance = ({ isEmployeeView = false }) => {
                     )} */}
                 </td>
             </tr>
+            </>
         );
     };
 
@@ -2947,4 +2950,4 @@ const AdminAttendance = ({ isEmployeeView = false }) => {
     );
 };
 
-export default AdminAttendance;
+export default React.memo(AdminAttendance);
