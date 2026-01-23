@@ -2965,6 +2965,56 @@ import React, { useEffect, useState, useRef } from "react";
 import { Eye, Edit2, Trash2, X, Users, CheckCircle, XCircle, Mail, Phone, Printer } from "lucide-react";
 import axios from "axios";
 
+// CSS Class Helper Functions
+const STYLES = {
+    // Responsive padding
+    p: {
+        responsive: "p-3 sm:p-4 md:p-6",
+        small: "p-2 sm:p-2.5 md:p-3",
+    },
+    // Responsive text sizes
+    text: {
+        lg: "text-lg sm:text-xl md:text-2xl",
+        base: "text-base sm:text-sm md:text-base",
+        sm: "text-xs sm:text-xs md:text-sm",
+        xs: "text-xs",
+        title: "text-lg sm:text-xl md:text-2xl",
+    },
+    // Responsive gaps
+    gap: {
+        responsive: "gap-2 sm:gap-3 md:gap-4",
+        small: "gap-1 sm:gap-2 md:gap-3",
+    },
+    // Responsive input/button
+    input: "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs sm:px-4 sm:py-2 sm:text-sm md:px-4 md:py-2 md:text-base transition-all focus:outline-none focus:ring-2 focus:ring-blue-500",
+    button: "rounded-lg px-3 py-2 text-xs sm:px-4 sm:py-2 sm:text-sm md:px-4 md:py-3 md:text-base font-medium transition-all",
+    buttonPrimary: "rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg",
+    buttonSecondary: "rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-gray-800",
+    // Badge styles
+    badgeActive: "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 sm:px-3 sm:py-1 md:px-3 md:py-1 text-xs font-semibold text-emerald-700",
+    badgeInactive: "inline-flex items-center gap-1 rounded-full bg-rose-100 px-2 py-0.5 sm:px-3 sm:py-1 md:px-3 md:py-1 text-xs font-semibold text-rose-700",
+    // Status cards
+    cardContainer: "rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden",
+    cardHeader: "border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50 px-3 py-2 sm:px-4 sm:py-3 md:px-4 md:py-3 flex items-center justify-between",
+    cardBody: "p-3 sm:p-4 md:p-4 space-y-2 sm:space-y-2.5 md:space-y-3 text-xs sm:text-xs md:text-sm",
+    // Modal styles
+    modalOverlay: "fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md duration-300",
+    modalContent: "relative flex h-full w-full flex-col overflow-y-auto rounded-lg border-0 bg-white shadow-2xl duration-300 md:h-screen md:w-screen md:rounded-none",
+    // Responsive grid
+    gridResponsive: "grid grid-cols-1 gap-3 sm:gap-4 md:gap-6",
+    // Responsive flex
+    flexResponsive: "flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4 md:gap-6",
+};
+
+// Format time helper
+const formatTime = (isoString) => {
+    if (!isoString) return "--:--";
+    const date = new Date(isoString);
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+};
+
 const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
     console.log("EmployeeTable rendered");
     const userId = localStorage.getItem("userId");
@@ -2984,9 +3034,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
     const [selectedDateForEdit, setSelectedDateForEdit] = useState(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const token = localStorage.getItem("token");
-    // const role = localStorage.getItem("role");
     const globalRole = localStorage.getItem("role");
-    // console.log(globalRole);
 
     const getDesignationName = (employee) => {
         // console.log(employee);
@@ -3940,14 +3988,14 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                 placeholder="Search by name, email, or phone..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full rounded-lg border border-gray-300 px-4 py-2 text-sm transition-all focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={STYLES.input}
                             />
                         </div>
                         <div className="flex w-full gap-2 sm:w-auto">
                             <select
                                 value={filterRole}
                                 onChange={(e) => setFilterRole(e.target.value)}
-                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm transition-all focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className={STYLES.input}
                             >
                                 <option value="All">All Roles</option>
                                 <option value="Admin">Admins</option>
@@ -4218,8 +4266,8 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
             {viewModal && selectedUser && (
                 <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-md duration-300">
                     <div className="animate-in zoom-in relative flex h-full w-full flex-col overflow-y-auto rounded-lg border-0 bg-white shadow-2xl duration-300 md:h-screen md:w-screen md:rounded-none">
-                        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white p-3 p-6 sm:p-4 md:p-6">
-                            <h2 className="text-3xl text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">Attendance Details</h2>
+                        <div className="sticky top-0 z-50 flex items-center justify-between border-b border-gray-200 bg-white p-3 sm:p-4 md:p-6">
+                            <h2 className="text-lg font-bold text-gray-900 sm:text-2xl md:text-3xl">Attendance Details</h2>
                             <div className="flex items-center gap-4">
                                 <button
                                     className="flex-shrink-0 text-gray-400 transition-colors hover:text-gray-600"
@@ -4234,19 +4282,19 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                         </div>
 
                         <div
-                            className="flex-1 overflow-y-auto p-4 p-8 sm:p-6 md:p-8"
+                            className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8"
                             ref={printRef}
                         >
                             {/* HEADER SECTION - Employee Details */}
                             <div className="mb-6 sm:mb-7 md:mb-8">
                                 {/* Employee Header */}
-                                <div className="mb-4 mb-6 sm:mb-5 md:mb-6">
-                                    <div className="flex items-start gap-3 gap-4 sm:gap-3 md:gap-4">
-                                        <div className="flex h-12 h-16 w-12 w-16 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 text-2xl text-lg font-bold text-white sm:h-12 sm:w-12 sm:text-lg md:h-16 md:w-16 md:text-2xl">
+                                <div className="mb-4 sm:mb-5 md:mb-6">
+                                    <div className="flex items-start gap-3 sm:gap-3 md:gap-4">
+                                        <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 text-lg font-bold text-white sm:h-12 sm:w-12 sm:text-lg md:h-16 md:w-16 md:text-2xl">
                                             {selectedUser?.fullName?.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <h3 className="truncate text-2xl text-lg font-bold text-gray-900 sm:text-xl md:text-2xl">
+                                            <h3 className="truncate text-lg font-bold text-gray-900 sm:text-xl md:text-2xl">
                                                 {selectedUser?.fullName}
                                             </h3>
                                             <p className="mt-1 text-xs text-gray-600 sm:text-sm">{selectedUser?.userType}</p>
@@ -4255,7 +4303,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                 </div>
 
                                 {/* Employee Info Grid (2 columns) */}
-                                <div className="grid grid-cols-2 gap-3 gap-6 rounded-lg bg-gray-50 p-3 p-6 sm:grid-cols-1 sm:gap-4 sm:p-4 md:grid-cols-2 md:gap-6 md:p-6">
+                                <div className="grid grid-cols-2 gap-3 rounded-lg bg-gray-50 p-3 sm:grid-cols-1 sm:gap-4 sm:p-4 md:grid-cols-2 md:gap-6 md:p-6">
                                     {/* Contact Information */}
                                     <div>
                                         <h3 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-700 sm:mb-2 sm:text-xs md:mb-3 md:text-sm">
@@ -4341,13 +4389,13 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                             </div>
 
                             {/* BOTTOM SECTION - Calendar & Attendance Summary Side by Side */}
-                            <div className="border-t border-gray-200 pt-4 pt-8 sm:pt-6 md:pt-8">
+                            <div className="border-t border-gray-200 pt-4 sm:pt-6 md:pt-8">
                                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:gap-8">
                                     {/* LEFT - Monthly Attendance Calendar (takes 2.5 columns) */}
                                     <div className="md:col-span-3">
                                         {/* Month & Year Selection */}
-                                        <div className="mb-6 mb-8 sm:mb-7 md:mb-8">
-                                            <div className="mb-4 mb-6 flex flex-col items-center gap-3 gap-4 sm:mb-5 sm:gap-3 md:mb-6 md:gap-4">
+                                        <div className="mb-6 sm:mb-7 md:mb-8">
+                                            <div className="mb-4 flex flex-col items-center gap-3 sm:mb-5 sm:gap-3 md:mb-6 md:gap-4">
                                                 <h3 className="text-center text-xl font-bold text-gray-900 sm:text-2xl md:text-4xl">
                                                     {currentMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                                                 </h3>
@@ -4424,13 +4472,13 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                     </div>
 
                                     {/* RIGHT - Attendance & Salary Summary (Stacked) */}
-                                    <div className="col-span-1 flex h-fit flex-col gap-4 gap-6 sm:gap-5 md:sticky md:top-8 md:col-span-1 md:gap-6">
+                                    <div className="col-span-1 flex h-fit flex-col gap-4 sm:gap-5 md:sticky md:top-8 md:gap-6">
                                         {/* Attendance Summary */}
-                                        <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-3 p-6 sm:p-4 md:p-6">
-                                            <h3 className="mb-2 text-lg text-sm font-bold text-gray-900 sm:text-base md:text-lg">
+                                        <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50 p-3 sm:p-4 md:p-6">
+                                            <h3 className="mb-2 text-sm font-bold text-gray-900 sm:text-base md:text-lg">
                                                 Attendance Summary
                                             </h3>
-                                            <p className="mb-4 mb-6 text-xs font-medium text-gray-600 sm:mb-5 md:mb-6">
+                                            <p className="mb-4 text-xs font-medium text-gray-600 sm:mb-5 md:mb-6">
                                                 {currentMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                                             </p>
 
@@ -4464,18 +4512,18 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                 ];
 
                                                 return (
-                                                    <div className="space-y-2 space-y-3 sm:space-y-2.5 md:space-y-3">
+                                                    <div className="space-y-2 sm:space-y-2.5 md:space-y-3">
                                                         {summaryData.map((item, idx) => (
                                                             <div
                                                                 key={idx}
-                                                                className={`${item.bgColor} rounded-lg border-l-4 border-current p-2 p-3 text-sm sm:p-2.5 sm:text-xs md:p-3 md:text-sm`}
+                                                                className={`${item.bgColor} rounded-lg border-l-4 border-current p-2 text-sm sm:p-2.5 sm:text-xs md:p-3 md:text-sm`}
                                                             >
                                                                 <div className="flex items-center justify-between gap-2 sm:gap-2 md:gap-2">
                                                                     <span className="text-sm font-semibold text-gray-700 sm:text-xs md:text-sm">
                                                                         {item.label}
                                                                     </span>
                                                                     <span
-                                                                        className={`text-lg text-xl font-bold sm:text-lg md:text-xl ${item.color.split(" ")[1]}`}
+                                                                        className={`text-lg font-bold sm:text-lg md:text-xl ${item.color.split(" ")[1]}`}
                                                                     >
                                                                         {item.value}
                                                                     </span>
@@ -4487,7 +4535,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                         ))}
 
                                                         {/* Total */}
-                                                        <div className="mt-3 mt-4 border-t border-blue-200 pt-2 pt-3 sm:mt-3.5 sm:pt-2.5 md:mt-4 md:pt-3">
+                                                        <div className="mt-3 border-t border-blue-200 pt-2 sm:mt-3.5 sm:pt-2.5 md:mt-4 md:pt-3">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-sm font-bold text-gray-800 sm:text-sm md:text-sm">
                                                                     Total Days
@@ -4503,9 +4551,9 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                         </div>
 
                                         {/* Salary Summary */}
-                                        <div className="rounded-lg border border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 p-3 p-6 sm:p-4 md:p-6">
-                                            <h3 className="mb-2 text-lg text-sm font-bold text-gray-900 sm:text-base md:text-lg">Salary Summary</h3>
-                                            <p className="mb-4 mb-6 text-xs font-medium text-gray-600 sm:mb-5 md:mb-6">
+                                        <div className="rounded-lg border border-green-300 bg-gradient-to-br from-green-50 to-emerald-50 p-3 sm:p-4 md:p-6">
+                                            <h3 className="mb-2 text-sm font-bold text-gray-900 sm:text-base md:text-lg">Salary Summary</h3>
+                                            <p className="mb-4 text-xs font-medium text-gray-600 sm:mb-5 md:mb-6">
                                                 {currentMonth.toLocaleDateString("en-IN", { month: "long", year: "numeric" })}
                                             </p>
 
@@ -4517,9 +4565,9 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                 const totalEarned = perDaySalary * presentDays;
 
                                                 return (
-                                                    <div className="space-y-2 space-y-3 text-sm sm:space-y-2.5 sm:text-sm md:space-y-3 md:text-sm">
+                                                    <div className="space-y-2 text-sm sm:space-y-2.5 md:space-y-3">
                                                         {/* Base Salary */}
-                                                        <div className="rounded-lg border border-green-200 bg-white p-2 p-3 sm:p-2.5 md:p-3">
+                                                        <div className="rounded-lg border border-green-200 bg-white p-2 sm:p-2.5 md:p-3">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-sm font-semibold text-gray-700 sm:text-sm md:text-sm">
                                                                     Base Salary
@@ -4531,7 +4579,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                         </div>
 
                                                         {/* Per Day Salary */}
-                                                        <div className="rounded-lg border border-green-200 bg-white p-2 p-3 sm:p-2.5 md:p-3">
+                                                        <div className="rounded-lg border border-green-200 bg-white p-2 sm:p-2.5 md:p-3">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-sm font-semibold text-gray-700 sm:text-sm md:text-sm">
                                                                     Per Day
@@ -4543,7 +4591,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                         </div>
 
                                                         {/* Working Days */}
-                                                        <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 p-2 p-3 sm:p-2.5 md:p-3">
+                                                        <div className="rounded-lg border-l-4 border-emerald-500 bg-emerald-50 p-2 sm:p-2.5 md:p-3">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-sm font-semibold text-gray-700 sm:text-sm md:text-sm">
                                                                     Working Days
@@ -4555,7 +4603,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                         </div>
 
                                                         {/* Earned Salary */}
-                                                        <div className="rounded-lg border-l-4 border-green-600 bg-gradient-to-r from-green-100 to-emerald-100 p-2 p-3 sm:p-2.5 md:p-3">
+                                                        <div className="rounded-lg border-l-4 border-green-600 bg-gradient-to-r from-green-100 to-emerald-100 p-2 sm:p-2.5 md:p-3">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-sm font-bold text-gray-800 sm:text-sm md:text-sm">Earned</span>
                                                                 <span className="text-lg font-bold text-green-700 sm:text-base md:text-lg">
@@ -4565,7 +4613,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                                                         </div>
 
                                                         {/* Final Payable */}
-                                                        <div className="rounded-lg border-2 border-emerald-700 bg-gradient-to-r from-emerald-500 to-green-600 p-2 p-3 text-white sm:p-2.5 md:p-3">
+                                                        <div className="rounded-lg border-2 border-emerald-700 bg-gradient-to-r from-emerald-500 to-green-600 p-2 text-white sm:p-2.5 md:p-3">
                                                             <div className="flex items-center justify-between gap-2">
                                                                 <span className="text-sm font-bold sm:text-sm md:text-sm">Payable</span>
                                                                 <span className="text-lg font-bold sm:text-base md:text-lg">
@@ -4582,7 +4630,7 @@ const AdminAttendance = ({ searchText, isEmployeeView = false }) => {
                             </div>
                         </div>
 
-                        <div className="sticky bottom-0 flex gap-3 border-t border-gray-200 bg-white p-3 p-6 sm:gap-3 sm:p-4 md:gap-3 md:p-6">
+                        <div className="sticky bottom-0 flex gap-3 border-t border-gray-200 bg-white p-3 sm:gap-3 sm:p-4 md:gap-3 md:p-6">
                             <button
                                 onClick={() => setViewModal(false)}
                                 className="flex-1 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-medium text-white shadow-md transition-all duration-200 hover:from-blue-700 hover:to-blue-800 hover:shadow-lg sm:px-4 sm:py-2 sm:text-sm md:px-4 md:py-3 md:text-sm"

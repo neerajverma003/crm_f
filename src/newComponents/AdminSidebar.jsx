@@ -170,7 +170,9 @@ const AdminSidebar = () => {
         // Dashboard at the top
         { id: "dashboard", label: "Dashboard", icon: <FiGrid size={20} />, url: "/dashboard" },
         // Companies and roles follow
-        ...buildCompanyDropdowns()
+        ...buildCompanyDropdowns(),
+        // 3️⃣ Company Overview
+            { id: 3, label: "Company Overview", icon: <FiBriefcase size={20} />, url: "/company-overview" },
       ];
 //   const allItems = [
 //     // 1️⃣ Dashboard

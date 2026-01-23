@@ -69,6 +69,10 @@ import LeadReport from "./newComponents/leadManagement/LeadReport.jsx";
 import AddItinerary from "./newComponents/Itinerary/AddItinerary.jsx";
 import AllItinerary from "./newComponents/Itinerary/AllItinerary.jsx";
 import DashboardSwitcher from "./utils/DashBoardSwitcher.jsx";
+import AdminProfile from "./newComponents/profile/AdminProfile.jsx";
+import EmployeeProfile from "./newComponents/profile/EmployeeProfile.jsx";
+import CompanyOverview from "./newComponents/company/CompanyOverview.jsx";
+
 // ✅ Role groups
 const roles = {
   all: ["admin", "employee", "superadmin"],
@@ -84,6 +88,14 @@ const AttendanceRoute = () => {
   
   if (role === "superadmin") return <SuperAdminAttendance />;
   return <MainAttendance />;
+};
+
+const ProfileRoute = () => {
+  const role = localStorage.getItem("role")?.toLowerCase();
+  // console.log(role);
+  
+  if (role === "admin") return <AdminProfile />;
+  return <EmployeeProfile />;
 };
 
 // ✅ ROUTER CONFIGURATION
@@ -110,6 +122,7 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      
       {
         path: "/lead-management",
         element: (
@@ -155,6 +168,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={roles.all}>
             <AttendanceRoute /> {/* 👈 Dynamic Attendance Loader */}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/profile",
+        element: (
+          <ProtectedRoute allowedRoles={roles.all}>
+            <ProfileRoute /> {/* 👈 Dynamic Profile Loader */}
           </ProtectedRoute>
         ),
       },
@@ -237,6 +258,14 @@ const router = createBrowserRouter([
         element: (
           <ProtectedRoute allowedRoles={roles.adminOnly}>
             <MainAllCompanies />
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: "/company-overview",
+        element: (
+          <ProtectedRoute allowedRoles={roles.superAdminOnly}>
+            <CompanyOverview />
           </ProtectedRoute>
         ),
       },
