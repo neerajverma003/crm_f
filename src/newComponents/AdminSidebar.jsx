@@ -59,7 +59,7 @@ const AdminSidebar = () => {
       
       if (data.admin) {
         setAdminData(data.admin);
-        console.log("Fetched admin data:", data.admin);
+        // console.log("Fetched admin data:", data.admin);
       }
     } catch (error) {
       console.error("Error fetching admin roles and companies:", error);
@@ -540,8 +540,76 @@ const AdminSidebar = () => {
                   // Store in localStorage for persistence
                   localStorage.setItem("selectedSubRole", JSON.stringify(subRoleData));
                   console.log("Selected SubRole:", subRoleData);
-                  // Navigate to cheque expense with subrole data
-                  navigate("/cheque", { state: { subRole: subRoleData } });
+
+                  // Navigate to DailyExpense if subRoleName is "Expenses"
+                  if (subRoleData.subRoleName === "Expenses") {
+                    navigate("/dailyexpenses", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to AllItinerary if subRoleName is "All Itinerary"
+                  else if (subRoleData.subRoleName === "All Itinerary") {
+                    navigate("/all-itinerary", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to AddItinerary if subRoleName is "Add Itinerary"
+                  else if (subRoleData.subRoleName === "Add Itinerary") {
+                    navigate("/add-itinerary", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to ChequeExpense if subRoleName is "Cheque Entry"
+                  else if (subRoleData.subRoleName === "Cheque Entry") {
+                    navigate("/cheque", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to B2bAddCompany if subRoleName is "Add Company"
+                  else if (subRoleData.subRoleName === "Add Company") {
+                    navigate("/b2b-addcompany", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to B2bDestination if subRoleName is "Create Destination"
+                  else if (subRoleData.subRoleName === "Create Destination") {
+                    navigate("/b2b-destination", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to Attendance if subRoleName is "Attendance"
+                  else if (subRoleData.subRoleName === "Attendance") {
+                    navigate("/attendance", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CreateCustomer if subRoleName is "Customer Creation"
+                  else if (subRoleData.subRoleName === "Customer Creation") {
+                    navigate("/customer-creation", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CreateDestination if subRoleName is "Add Destination"
+                  else if (subRoleData.subRoleName === "Add Destination") {
+                    navigate("/createdestination", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CreateHotel if subRoleName is "Add Hotel"
+                  else if (subRoleData.subRoleName === "Add Hotel") {
+                    navigate("/createhotel", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CreateInvoice if subRoleName is "Invoice Creation"
+                  else if (subRoleData.subRoleName === "Invoice Creation") {
+                    navigate("/createinvoice", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CreateState if subRoleName is "Add State"
+                  else if (subRoleData.subRoleName === "Add State") {
+                    navigate("/createstate", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CreateTransport if subRoleName is "Add Transport"
+                  else if (subRoleData.subRoleName === "Add Transport") {
+                    navigate("/createtransport", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to CustomerData if subRoleName is "Customer Data"
+                  else if (subRoleData.subRoleName === "Customer Data") {
+                    navigate("/customer-data", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to InvoiceList if subRoleName is "Invoice List"
+                  else if (subRoleData.subRoleName === "Invoice List") {
+                    navigate("/invoicelist", { state: { subRole: subRoleData } });
+                  }
+                  // Navigate to DisputeClients if subRoleName is "dispute clients"
+                  else if (subRoleData.subRoleName === "dispute clients") {
+                    navigate("/dispute-clients", { state: { subRole: subRoleData } });
+                  }
+                  // Default fallback navigation
+                  else {
+                    navigate(`/${subRoleData.subRoleName}`, { state: { subRole: subRoleData } });
+                  }
+
                   setIsOpen(false);
                 }}
                 className={`w-full text-left px-3 py-1.5 rounded-md text-[10px] font-bold transition-all duration-200 ${
