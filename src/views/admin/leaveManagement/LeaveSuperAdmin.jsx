@@ -3,9 +3,8 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import { Check, X } from "lucide-react";
 import { FaEye } from "react-icons/fa";
-import { LeavePage } from "../../employee/LeaveSection/LeavePage";
 
-export const LeaveAdmin = () => {
+export const LeaveSuperAdmin = () => {
   const [leaves, setLeaves] = useState([]);
   const [employeeDetails, setEmployeeDetails] = useState({});
   const [companyDetails, setCompanyDetails] = useState({});
@@ -38,66 +37,28 @@ export const LeaveAdmin = () => {
       const leaveData = res.data?.leaves || res.data;
       setLeaves(leaveData);
 
-      // 🧠 Fetch employee/admin details (supports both employee and admin-applied leaves)
+      // 🧠 Fetch employee details
       const employeePromises = leaveData.map(async (leave) => {
         const empId = leave.employeeId?._id || leave.employeeId;
         if (!empId) return null;
-
-        try {
-          // 🔹 First try to fetch as an Employee
-          const empRes = await axios.get(
-            `http://localhost:4000/employee/getEmployee/${empId}`
-          );
-          return { empId, data: empRes.data.employee };
-        } catch (error) {
-          // 🔹 If not found as Employee, try to fetch as an Admin (for admin-applied leaves)
-          try {
-            const adminRes = await axios.get(
-              `http://localhost:4000/getAdmin/${empId}`
-            );
-            const admin = adminRes.data?.admin;
-            if (!admin) return null;
-
-            // Normalize admin shape so it works with existing rendering logic
-            const normalizedAdmin = {
-              ...admin,
-              // department is already a string on Admin
-              department: admin.department || undefined,
-              // use first assigned company (if multiple)
-              company:
-                Array.isArray(admin.company) && admin.company.length > 0
-                  ? admin.company[0]
-                  : admin.company,
-            };
-
-            return { empId, data: normalizedAdmin };
-          } catch (error2) {
-            // If both lookups fail, skip this record
-            return null;
-          }
-        }
+        const empRes = await axios.get(
+          `http://localhost:4000/employee/getEmployee/${empId}`
+        );
+        return { empId, data: empRes.data.employee };
       });
 
       const employeeResults = await Promise.all(employeePromises);
       const empDataMap = {};
       const companyIds = new Set();
 
-      // 🧩 Map employee/admin and extract valid company IDs
+      // 🧩 Map employee and extract valid company IDs
       employeeResults.forEach((item) => {
         if (item) {
           empDataMap[item.empId] = item.data;
 
           // ✅ FIX: ensure we only add company._id or string ID
           const companyField = item.data?.company;
-          if (Array.isArray(companyField)) {
-            companyField.forEach((c) => {
-              if (c?._id) {
-                companyIds.add(c._id);
-              } else if (typeof c === "string") {
-                companyIds.add(c);
-              }
-            });
-          } else if (companyField?._id) {
+          if (companyField?._id) {
             companyIds.add(companyField._id);
           } else if (typeof companyField === "string") {
             companyIds.add(companyField);
@@ -183,7 +144,7 @@ export const LeaveAdmin = () => {
     <div className="max-h-[85vh] overflow-y-auto bg-[#f8f9fa] p-8 relative">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Leave Management Admin</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Leave Management Super Admin</h1>
         <p className="text-gray-600">
           Review, approve, or reject leave requests from employees
         </p>
@@ -382,9 +343,6 @@ export const LeaveAdmin = () => {
           </div>
         </div>
       )}
-
-
-      <LeavePage/>
     </div>
   );
 };

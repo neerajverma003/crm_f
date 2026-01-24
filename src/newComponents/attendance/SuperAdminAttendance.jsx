@@ -6190,6 +6190,7 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Eye, Edit2, Trash2, X, Users, CheckCircle, XCircle, Mail, Phone, Printer } from "lucide-react";
 import axios from "axios";
+import SuperAdminAttendanceCard from "./SupaerAdminAttendanceCard";
 
 const SuperAdminAttendance = () => {
     const [data, setData] = useState({ active: [], inactive: [] });
@@ -7286,6 +7287,7 @@ const SuperAdminAttendance = () => {
     /* -------------------------------------------------------------------------- */
     return (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 p-6">
+
             {/* Header Section */}
             <div className="mb-8">
                 <div className="mb-2 flex items-center gap-3">
@@ -7297,6 +7299,8 @@ const SuperAdminAttendance = () => {
                 </div>
                 <p className="text-sm text-gray-600">Monitor active and inactive employees and administrators</p>
             </div>
+
+            <SuperAdminAttendanceCard/>
 
             {/* Search & Filter Bar */}
             <div className="mb-6 rounded-xl border border-gray-100 bg-white p-4 shadow-md">

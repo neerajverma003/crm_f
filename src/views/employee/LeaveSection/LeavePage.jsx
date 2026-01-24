@@ -4,17 +4,21 @@ import { toast } from "react-toastify";
 import { FaEye } from "react-icons/fa";
 
 export const LeavePage = () => {
+  const role=localStorage.getItem("role")?.toLowerCase();
   const [leaveData, setLeaveData] = useState({
     employeeId: localStorage.getItem("userId"),
-    companyId: localStorage.getItem("companyId"),
+    // companyId: localStorage.getItem("companyId"),
+    companyId :role === "employee"? localStorage.getItem("companyId"): localStorage.getItem("companyId").split(",")[0],
     leaveType: "",
     startDate: "",
     endDate: "",
     reason: "",
   });
-
+  console.log(leaveData);
+  
   const [myLeaves, setMyLeaves] = useState([]);
   const [selectedLeave, setSelectedLeave] = useState(null); // 👁️ Selected leave for popup
+  // const role = localStorage.getItem("role")?.toLowerCase();
 
   // 🔹 Fetch employee's leave history
   const fetchMyLeaves = async () => {
@@ -60,7 +64,8 @@ export const LeavePage = () => {
   return (
     <div className="max-h-[85vh] overflow-y-auto bg-[#f8f9fa] p-8 relative">
       {/* Header */}
-      <div className="mb-6">
+      {role==="employee" &&(
+        <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
           Leave Management
         </h1>
@@ -68,6 +73,7 @@ export const LeavePage = () => {
           Apply for leave and view your application history
         </p>
       </div>
+      )}
 
       {/* Leave Apply Form */}
       <div className="bg-white p-6 rounded-xl shadow-sm mb-8 border border-gray-200">

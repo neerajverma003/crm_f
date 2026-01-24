@@ -5,6 +5,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Attendance from "../attendance/Attendence.jsx";
 import EmployeeTable from "./EmployeeTable.jsx";
 import SearchEmployes from "./SearchEmployes.jsx";
+import { useNavigate } from "react-router-dom";
 
 const MainAttendance = () => {
     const [userId, setUserId] = useState(null);
@@ -18,6 +19,7 @@ const MainAttendance = () => {
 
     const today = new Date();
     const formattedDate = today.toLocaleDateString("en-US");
+    const navigate=useNavigate();
 
     /* -------------------------------------------------------------------------- */
     /* ✅ Load user data and role from localStorage */
@@ -318,7 +320,14 @@ const MainAttendance = () => {
                             >
                                 Clock Out
                             </button>
+                            
                         </div>
+                        <button
+                                onClick={() => navigate('/leaves')}
+                                className="w-full rounded-xl py-4 mt-4 text-base font-semibold text-black border-2 hover:bg-green-500 disabled:opacity-50 sm:flex-1"
+                            >
+                                Leave
+                            </button>
                     </div>
 
                     {/* RIGHT SIDE (unchanged) */}

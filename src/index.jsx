@@ -28,6 +28,8 @@ import ResetLink from "./newComponents/loginSection/ResetLink.jsx";
 import ChangePassword from "./newComponents/loginSection/ChangePassword.jsx";
 import EditUser from "./newComponents/UserManagement/EditUser.jsx";
 import { LeaveAdmin } from "./views/admin/leaveManagement/LeaveAdmin.jsx";
+import { LeaveSuperAdmin } from "./views/admin/leaveManagement/LeaveSuperAdmin.jsx";
+
 import { LeavePage } from "./views/employee/LeaveSection/LeavePage.jsx";
 import ChequeExpense from "./newComponents/expense/ChequeExpense.jsx";
 import DailyExpense from "./newComponents/expense/DailyExpense.jsx";
@@ -72,6 +74,7 @@ import DashboardSwitcher from "./utils/DashBoardSwitcher.jsx";
 import AdminProfile from "./newComponents/profile/AdminProfile.jsx";
 import EmployeeProfile from "./newComponents/profile/EmployeeProfile.jsx";
 import CompanyOverview from "./newComponents/company/CompanyOverview.jsx";
+import EmployeeLeave from "./views/admin/dashboard/EmployeeLeave.jsx";
 
 // ✅ Role groups
 const roles = {
@@ -84,7 +87,7 @@ const roles = {
 // ✅ Role-based Attendance Wrapper
 const AttendanceRoute = () => {
   const role = localStorage.getItem("role")?.toLowerCase();
-  // console.log(role);
+  console.log(role);
   
   if (role === "superadmin") return <SuperAdminAttendance />;
   return <MainAttendance />;
@@ -96,7 +99,16 @@ const ProfileRoute = () => {
   
   if (role === "admin") return <AdminProfile />;
   return <EmployeeProfile />;
-};
+}; 
+
+const LeaveRoute = () => {
+  const role = localStorage.getItem("role")?.toLowerCase();
+  // console.log(role);
+  
+  if (role === "admin") return <LeaveAdmin />
+  else if(role==="superadmin") return <LeaveSuperAdmin />;
+  return <LeavePage />;
+}; 
 
 // ✅ ROUTER CONFIGURATION
 const router = createBrowserRouter([
@@ -352,8 +364,8 @@ const router = createBrowserRouter([
       {
         path: "/leaves",
         element: (
-          <ProtectedRoute allowedRoles={roles.adminOnly}>
-            <LeaveAdmin />
+          <ProtectedRoute allowedRoles={roles.all}>
+            <LeaveRoute />
           </ProtectedRoute>
         ),
       },
